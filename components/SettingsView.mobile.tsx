@@ -2798,13 +2798,13 @@ export const SettingsViewMobile: React.FC<SettingsViewMobileProps> = ({ isOpen, 
 
   return (
     <div 
-        className={`fixed inset-0 z-50 transition-opacity duration-300 ease-in-out ${isOpen ? 'bg-black/50' : 'bg-transparent pointer-events-none'}`}
+        className={`fixed inset-0 z-50 transition-opacity duration-500 ease-in-out ${isOpen ? 'bg-black/50 backdrop-blur-sm' : 'bg-transparent pointer-events-none opacity-0'}`}
         onClick={handleClose}
         role="dialog"
         aria-modal="true"
     >
         <div 
-            className={`absolute bottom-0 left-0 right-0 h-[95dvh] bg-background rounded-t-2xl shadow-2xl flex flex-col transition-transform duration-300 ease-in-out settings-mobile-light ${isOpen ? 'translate-y-0' : 'translate-y-full'}`}
+            className={`absolute bottom-0 left-0 right-0 h-[95dvh] bg-background rounded-t-2xl shadow-2xl flex flex-col transition-transform duration-500 ease-out settings-mobile-light ${isOpen ? 'translate-y-0' : 'translate-y-full'}`}
             onClick={(e) => e.stopPropagation()}
         >
             <div className="w-full flex justify-center pt-3 pb-2 flex-shrink-0">

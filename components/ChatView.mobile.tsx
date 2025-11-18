@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import type { ChatConversation, ChatMessage, User, Thread } from '../types';
 import { MOCK_CHAT_CONVERSATIONS, allUsers, you, MOCK_THREADS } from '../constants';
@@ -102,7 +103,7 @@ const ChatViewMobile: React.FC = () => {
         setInput('');
     };
     
-    const handleSelectUser = (user: User) => {
+    const handleSelectUser = (user: User, inviteText?: string) => {
         if (user.email === you.email) return;
 
         const existingConversation = conversations.find(c => c.participant.email === user.email);
@@ -119,6 +120,13 @@ const ChatViewMobile: React.FC = () => {
             setConversations(prev => [newConversation, ...prev]);
             setSelectedConversationId(newConversation.id);
         }
+        
+        if (inviteText) {
+            setInput(inviteText);
+        } else {
+            setInput('');
+        }
+        
         setIsCreatingChat(false);
     };
 
@@ -240,7 +248,7 @@ const ChatViewMobile: React.FC = () => {
                                 <div ref={chatEndRef} />
                             </div>
                         </main>
-                        <footer className="px-4 pt-4 pb-4 border-t border-border bg-background flex-shrink-0" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
+                        <footer className="px-4 pt-4 pb-4 border-t border-border bg-background flex-shrink-0" style={{ paddingBottom: 'calc(6rem + env(safe-area-inset-bottom))' }}>
                              <div className="flex items-end space-x-2 w-full bg-secondary border border-border rounded-xl p-2">
                                 <textarea
                                     placeholder={`Message ${selectedConversation.participant.name}...`}

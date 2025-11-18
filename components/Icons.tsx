@@ -237,7 +237,7 @@ export const EnvelopeOpenIcon: React.FC<IconProps> = (props) => (
 );
 
 export const AICopilotIcon: React.FC<IconProps> = (props) => (
-  <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+  <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" {...props}>
     <defs>
       <linearGradient id="aiIconGradient" x1="2" y1="30" x2="30" y2="2" gradientUnits="userSpaceOnUse">
         <stop stopColor="#A855F7" />
