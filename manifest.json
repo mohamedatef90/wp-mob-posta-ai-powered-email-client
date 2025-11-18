@@ -1,0 +1,23 @@
+{
+  "name": "Posta",
+  "short_name": "Posta",
+  "description": "A modern, AI-powered email client designed for desktop and mobile platforms. It features automatic categorization, thread summarization, smart search, and integrations for AI assistance, chat, and cloud drive management, inspired by leading apps like Shortwave and Canary Mail.",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1397e4",
+  "icons": [
+    {
+      "src": "https://i.postimg.cc/59BYkdyG/Posta.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://i.postimg.cc/59BYkdyG/Posta.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
