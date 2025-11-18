@@ -22,6 +22,7 @@ interface EmailListHeaderMobileProps {
   onToggleBulkSelect?: (active: boolean) => void;
   isAiSearching?: boolean;
   areAllSelectedRead?: boolean;
+  onOpenCalendar?: () => void;
 }
 
 const cn = (...classes: (string | boolean | undefined)[]) => classes.filter(Boolean).join(' ');
@@ -44,6 +45,7 @@ const EmailListHeaderMobile: React.FC<EmailListHeaderMobileProps> = ({
   onToggleBulkSelect,
   isAiSearching,
   areAllSelectedRead,
+  onOpenCalendar,
 }) => {
   const { setActiveModule, setInitialSettingsView, activeDomain, uiTheme } = useContext(AppContext);
   
@@ -197,7 +199,10 @@ const EmailListHeaderMobile: React.FC<EmailListHeaderMobileProps> = ({
                 {subtitle && <p className="text-sm text-muted-foreground -mt-1">{subtitle}</p>}
               </div>
             </div>
-            <div className="flex items-center space-x-1">
+            <div className="flex items-center space-x-2">
+               <button onClick={onOpenCalendar} className="p-2 rounded-full bg-card/50 backdrop-blur-sm border border-border shadow-sm text-primary hover:bg-accent transition-colors">
+                  <i className="fa-regular fa-calendar w-5 h-5"></i>
+               </button>
                <button onClick={() => onToggleBulkSelect?.(true)} className="px-4 py-1.5 rounded-full bg-card/50 backdrop-blur-sm border border-border shadow-sm text-base font-semibold text-primary hover:bg-accent transition-colors">Select</button>
             </div>
           </div>

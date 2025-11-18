@@ -84,6 +84,7 @@ interface EmailListMobileProps {
   onSearchQueryChange: (query: string) => void;
   onBulkModeChange: (isActive: boolean) => void;
   isAiSearching: boolean;
+  onOpenCalendar?: () => void;
 }
 
 const pills = [
@@ -199,6 +200,7 @@ const EmailListMobile: React.FC<EmailListMobileProps> = (props) => {
         isBulkSelecting={isBulkSelecting}
         onToggleBulkSelect={toggleBulkSelect}
         areAllSelectedRead={areAllSelectedRead}
+        onOpenCalendar={props.onOpenCalendar}
       />
       
       <div className="flex-1 overflow-y-auto no-scrollbar pb-32">

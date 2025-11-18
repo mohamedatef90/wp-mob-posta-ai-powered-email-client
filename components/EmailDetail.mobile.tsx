@@ -18,6 +18,8 @@ interface EmailDetailProps {
   onToggleStar: () => void;
   onOpenKebabMenu: (anchorEl: HTMLElement) => void;
   onSummarize: () => void;
+  onGenerateAiReply?: () => void;
+  isGeneratingReply?: boolean;
 }
 
 const ThreadSummary: React.FC<{
@@ -150,7 +152,7 @@ const MessageItemClassic: React.FC<{ message: Message; onOpenKebabMenu: (anchorE
 };
 
 
-const EmailDetailMobile: React.FC<EmailDetailProps> = ({ thread, summaryState, onClearSummary, onComposeInteraction, onToggleStar, onOpenKebabMenu, onSummarize }) => {
+const EmailDetailMobile: React.FC<EmailDetailProps> = ({ thread, summaryState, onClearSummary, onComposeInteraction, onToggleStar, onOpenKebabMenu, onSummarize, onGenerateAiReply, isGeneratingReply }) => {
   const { uiTheme } = useContext(AppContext);
   
   if (!thread) {
@@ -215,12 +217,13 @@ const EmailDetailMobile: React.FC<EmailDetailProps> = ({ thread, summaryState, o
                 </span>
             </button>
             <button 
-                onClick={() => alert('Generate Reply coming soon!')}
-                className="flex-1 bg-white/20 dark:bg-zinc-800/20 backdrop-blur-sm border border-white/20 dark:border-white/20 rounded-xl shadow-md px-4 py-3 flex items-center justify-center space-x-2 transition-all hover:bg-white/30 dark:hover:bg-zinc-800/40"
+                onClick={onGenerateAiReply}
+                disabled={isGeneratingReply}
+                className="flex-1 bg-white/20 dark:bg-zinc-800/20 backdrop-blur-sm border border-white/20 dark:border-white/20 rounded-xl shadow-md px-4 py-3 flex items-center justify-center space-x-2 transition-all hover:bg-white/30 dark:hover:bg-zinc-800/40 disabled:opacity-70 disabled:cursor-not-allowed"
             >
-                <i className="fa-solid fa-pen-sparkles bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600"></i>
+                <i className={`fa-solid fa-pen-sparkles bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600 ${isGeneratingReply ? 'animate-spin' : ''}`}></i>
                 <span className="font-semibold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600">
-                    Generate Reply
+                    {isGeneratingReply ? 'Drafting...' : 'Draft Reply'}
                 </span>
             </button>
         </div>

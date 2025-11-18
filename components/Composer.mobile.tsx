@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import { Button } from './ui/Button';
-import { AICopilotIcon } from './Icons';
+import { AICopilotIcon, SendLaterIcon } from './Icons';
 
 interface ComposerMobileProps {
     onClose: () => void;
@@ -63,6 +64,96 @@ const AIPopover: React.FC<{
     );
 };
 
+const CloseConfirmationModal: React.FC<{
+    isOpen: boolean;
+    onClose: () => void;
+    onDiscard: () => void;
+    onSaveDraft: () => void;
+}> = ({ isOpen, onClose, onDiscard, onSaveDraft }) => {
+    if (!isOpen) return null;
+    
+    return (
+        <div className="fixed inset-0 z-[70] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+            <div className="bg-card w-full max-w-xs rounded-2xl shadow-2xl overflow-hidden animate-scaleIn">
+                <div className="p-6 text-center border-b border-border">
+                    <h3 className="text-lg font-semibold text-foreground">Save Draft?</h3>
+                    <p className="text-sm text-muted-foreground mt-2">Do you want to save this message as a draft?</p>
+                </div>
+                <div className="flex flex-col">
+                    <button onClick={onSaveDraft} className="w-full py-3.5 text-primary font-semibold text-base hover:bg-accent transition-colors">
+                        Save Draft
+                    </button>
+                    <div className="h-px bg-border w-full"></div>
+                    <button onClick={onDiscard} className="w-full py-3.5 text-destructive font-semibold text-base hover:bg-accent transition-colors">
+                        Discard
+                    </button>
+                     <div className="h-px bg-border w-full"></div>
+                    <button onClick={onClose} className="w-full py-3.5 text-foreground font-medium text-base hover:bg-accent transition-colors">
+                        Continue Writing
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const SendLaterMenu: React.FC<{
+    isOpen: boolean;
+    onClose: () => void;
+    onSelect: (option: string) => void;
+}> = ({ isOpen, onClose, onSelect }) => {
+    if (!isOpen) return null;
+    
+    const options = ['10 minutes', '20 minutes', '1 hour', '3 hours', 'Custom'];
+    
+    return (
+        <>
+        <div className="fixed inset-0 z-[60]" onClick={onClose}></div>
+        <div className="fixed z-[70] top-16 right-16 bg-popover/90 backdrop-blur-xl border border-border rounded-xl shadow-2xl w-48 animate-scaleIn overflow-hidden origin-top-right">
+            <div className="py-1">
+                <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Send Later</div>
+                {options.map(opt => (
+                    <button 
+                        key={opt} 
+                        onClick={() => onSelect(opt)}
+                        className="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-accent transition-colors"
+                    >
+                        {opt}
+                    </button>
+                ))}
+            </div>
+        </div>
+        </>
+    );
+};
+
+const CustomSendLaterModal: React.FC<{
+    isOpen: boolean;
+    onClose: () => void;
+    onConfirm: (date: string) => void;
+}> = ({ isOpen, onClose, onConfirm }) => {
+    const [date, setDate] = useState('');
+    
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 z-[80] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+            <div className="bg-card w-full max-w-xs rounded-2xl shadow-xl p-6 animate-scaleIn">
+                <h3 className="text-lg font-semibold text-foreground mb-4">Pick a date & time</h3>
+                <input 
+                    type="datetime-local" 
+                    className="w-full p-3 rounded-lg bg-secondary border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary mb-6"
+                    onChange={(e) => setDate(e.target.value)}
+                />
+                <div className="flex justify-end gap-3">
+                    <Button variant="ghost" onClick={onClose}>Cancel</Button>
+                    <Button onClick={() => onConfirm(date)} disabled={!date}>Set Time</Button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 
 const ComposerMobile: React.FC<ComposerMobileProps> = ({ onClose, initialState, onSend }) => {
     const [to, setTo] = useState('');
@@ -76,6 +167,13 @@ const ComposerMobile: React.FC<ComposerMobileProps> = ({ onClose, initialState, 
     const [isAiMenuOpen, setIsAiMenuOpen] = useState(false);
     const aiButtonRef = useRef<HTMLButtonElement>(null);
     const [isFormattingOpen, setIsFormattingOpen] = useState(false);
+    
+    // Logic for Close Modal
+    const [showCloseConfirmation, setShowCloseConfirmation] = useState(false);
+    
+    // Logic for Send Later
+    const [showSendLaterMenu, setShowSendLaterMenu] = useState(false);
+    const [showCustomSendLater, setShowCustomSendLater] = useState(false);
 
     const hasContent = to || cc || bcc || subject || body || attachments.length > 0;
     
@@ -86,6 +184,26 @@ const ComposerMobile: React.FC<ComposerMobileProps> = ({ onClose, initialState, 
             setBody(initialState.body || '');
         }
     }, [initialState]);
+    
+    const handleCloseAttempt = () => {
+        if (hasContent) {
+            setShowCloseConfirmation(true);
+        } else {
+            onClose();
+        }
+    };
+    
+    const handleDiscard = () => {
+        setShowCloseConfirmation(false);
+        onClose();
+    };
+    
+    const handleSaveDraft = () => {
+        // Mock save draft logic
+        console.log("Draft saved:", { to, subject, body });
+        setShowCloseConfirmation(false);
+        onClose();
+    };
 
     const handleSend = () => {
         if (!to.trim()) {
@@ -93,6 +211,32 @@ const ComposerMobile: React.FC<ComposerMobileProps> = ({ onClose, initialState, 
             return;
         }
         onSend({ to, cc, bcc, subject, body, attachments });
+    };
+    
+    const handleSendLaterSelect = (option: string) => {
+        setShowSendLaterMenu(false);
+        if (option === 'Custom') {
+            setShowCustomSendLater(true);
+            return;
+        }
+        
+        // Mock calculation
+        let delay = 0;
+        if (option === '10 minutes') delay = 10 * 60 * 1000;
+        if (option === '20 minutes') delay = 20 * 60 * 1000;
+        if (option === '1 hour') delay = 60 * 60 * 1000;
+        if (option === '3 hours') delay = 3 * 60 * 60 * 1000;
+        
+        const sendTime = new Date(Date.now() + delay);
+        alert(`Email scheduled for ${sendTime.toLocaleTimeString()}`);
+        onClose();
+    };
+    
+    const handleCustomSendLater = (dateString: string) => {
+        const date = new Date(dateString);
+        alert(`Email scheduled for ${date.toLocaleString()}`);
+        setShowCustomSendLater(false);
+        onClose();
     };
     
     const handleAttachClick = () => {
@@ -124,7 +268,7 @@ const ComposerMobile: React.FC<ComposerMobileProps> = ({ onClose, initialState, 
     return (
         <div className="fixed inset-0 bg-background z-50 flex flex-col animate-fadeInUp">
             <header className="p-2 flex items-center justify-between flex-shrink-0">
-                <Button variant="ghost" size="default" onClick={onClose} className="text-primary font-semibold">
+                <Button variant="ghost" size="default" onClick={handleCloseAttempt} className="text-primary font-semibold">
                     Cancel
                 </Button>
                 <h2 className="text-lg font-bold">New Message</h2>
@@ -132,9 +276,12 @@ const ComposerMobile: React.FC<ComposerMobileProps> = ({ onClose, initialState, 
                      <Button ref={aiButtonRef} variant="ghost" size="icon" className="h-10 w-10 text-primary" onClick={handleAiClick}>
                         <AICopilotIcon className="w-6 h-6" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => alert('Send Later clicked!')} className="h-10 w-10 text-primary">
-                        <i className="fa-regular fa-clock w-5 h-5"></i>
-                    </Button>
+                    <div className="relative">
+                        <Button variant="ghost" size="icon" onClick={() => setShowSendLaterMenu(!showSendLaterMenu)} className="h-12 w-12 text-blue-600 dark:text-blue-400">
+                            <SendLaterIcon className="w-7 h-7" />
+                        </Button>
+                        <SendLaterMenu isOpen={showSendLaterMenu} onClose={() => setShowSendLaterMenu(false)} onSelect={handleSendLaterSelect} />
+                    </div>
                     <Button onClick={handleSend} disabled={!to.trim()} size="icon" className="h-10 w-10 bg-primary text-primary-foreground rounded-full shadow-sm hover:bg-primary/90">
                         <i className="fa-solid fa-paper-plane w-4 h-4 text-white"></i>
                     </Button>
@@ -251,6 +398,19 @@ const ComposerMobile: React.FC<ComposerMobileProps> = ({ onClose, initialState, 
                 isOpen={isAiMenuOpen}
                 onClose={() => setIsAiMenuOpen(false)}
                 onSelect={handleAiMenuSelect}
+            />
+
+            <CloseConfirmationModal 
+                isOpen={showCloseConfirmation}
+                onClose={() => setShowCloseConfirmation(false)}
+                onSaveDraft={handleSaveDraft}
+                onDiscard={handleDiscard}
+            />
+
+            <CustomSendLaterModal 
+                isOpen={showCustomSendLater}
+                onClose={() => setShowCustomSendLater(false)}
+                onConfirm={handleCustomSendLater}
             />
         </div>
     );

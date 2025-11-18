@@ -77,6 +77,9 @@ interface EmailViewProps {
   mobileMainView: 'mailboxes' | 'list';
   setMobileMainView: React.Dispatch<React.SetStateAction<'mailboxes' | 'list'>>;
   isAiSearching: boolean;
+  onOpenCalendar?: () => void;
+  onGenerateAiReply?: () => void;
+  isGeneratingReply?: boolean;
 }
 
 const EmailView: React.FC<EmailViewProps> = (props) => {
@@ -102,6 +105,8 @@ const EmailView: React.FC<EmailViewProps> = (props) => {
                     onToggleStar={() => props.handleToggleStarThread(selectedThread.id)}
                     onOpenKebabMenu={(anchorEl) => selectedThread && props.handleOpenKebabMenu(selectedThread.id, anchorEl)}
                     onSummarize={props.handleSummarizeThread}
+                    onGenerateAiReply={props.onGenerateAiReply}
+                    isGeneratingReply={props.isGeneratingReply}
                 />
             </div>
             <EmailDetailHeaderMobile
@@ -170,6 +175,7 @@ const EmailView: React.FC<EmailViewProps> = (props) => {
             onBack={() => setMobileMainView('mailboxes')}
             onBulkModeChange={props.onBulkModeChange}
             isAiSearching={props.isAiSearching}
+            onOpenCalendar={props.onOpenCalendar}
           />
         );
       }
@@ -214,6 +220,7 @@ const EmailView: React.FC<EmailViewProps> = (props) => {
         onSearchQueryChange={props.onSearchQueryChange}
         onBulkModeChange={props.onBulkModeChange}
         isAiSearching={props.isAiSearching}
+        onOpenCalendar={props.onOpenCalendar}
     />;
   }
 
@@ -297,6 +304,8 @@ const EmailView: React.FC<EmailViewProps> = (props) => {
             onSearchQueryChange={props.onSearchQueryChange}
             onOpenSearchFilters={props.onOpenSearchFilters}
             areFiltersActive={props.areFiltersActive}
+            onGenerateAiReply={props.onGenerateAiReply}
+            isGeneratingReply={props.isGeneratingReply}
         />
         <div className="flex-1 flex min-h-0 relative">
           <EmailDetail

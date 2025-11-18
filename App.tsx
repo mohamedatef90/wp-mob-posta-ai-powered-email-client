@@ -26,6 +26,7 @@ import MobileBottomNav from './components/MobileBottomNav';
 import ComposerMobile from './components/Composer.mobile';
 import { SettingsViewMobile } from './components/SettingsView.mobile';
 import MailboxSidebar from './components/MailboxSidebar';
+import { CalendarViewMobile } from './components/CalendarView.mobile';
 
 
 export interface SearchFilters {
@@ -72,6 +73,7 @@ const App: React.FC = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [isMailboxSidebarOpen, setIsMailboxSidebarOpen] = useState(false);
   const [isMobileSettingsOpen, setIsMobileSettingsOpen] = useState(false);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [isBulkModeActive, setIsBulkModeActive] = useState(false);
   const [previousActiveModule, setPreviousActiveModule] = useState<Module>('email');
 
@@ -97,6 +99,9 @@ const App: React.FC = () => {
   const [isAiSearching, setIsAiSearching] = useState(false);
   const [aiFilteredThreadIds, setAiFilteredThreadIds] = useState<string[] | null>(null);
   const debounceTimeout = useRef<number | null>(null);
+  
+  // AI Reply State
+  const [isGeneratingReply, setIsGeneratingReply] = useState(false);
 
 
   // Undo Snackbar state
@@ -560,6 +565,37 @@ const App: React.FC = () => {
         setThreadSummary({ threadId: selectedThread.id, summary: null, isLoading: false, error: 'Could not generate summary.' });
     }
   };
+  
+  const handleGenerateAiReply = async () => {
+      if (!selectedThread || !ai) return;
+      setIsGeneratingReply(true);
+      
+      try {
+          const threadContent = selectedThread.messages.map(m => `${m.sender.name}: ${m.body.replace(/<[^>]*>/g, '')}`).join('\n');
+          const prompt = `You are a helpful email assistant. Draft a professional, concise, and polite reply to the following email thread. Do not include placeholders like '[Your Name]' if you know the user's name (Alex), otherwise use '[Your Name]'. Return ONLY the body text of the email, no subject line or headers.\n\nThread Context:\n${threadContent}`;
+          
+          const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+          const replyBody = response.text.trim();
+          
+          // Prepare Composer
+          const lastMessage = selectedThread.messages[selectedThread.messages.length - 1];
+          const subject = selectedThread.subject.startsWith('Re:') ? selectedThread.subject : `Re: ${selectedThread.subject}`;
+          
+          setComposerState({
+              to: lastMessage.sender.email,
+              subject: subject,
+              body: replyBody
+          });
+          
+          setIsComposerOpen(true);
+
+      } catch (e) {
+          console.error("Failed to generate reply", e);
+          alert("Failed to generate AI reply. Please try again.");
+      } finally {
+          setIsGeneratingReply(false);
+      }
+  };
 
   const handleOpenSearchFilters = (anchorEl: HTMLElement) => {
     setSearchFilterAnchorEl(anchorEl);
@@ -732,6 +768,9 @@ const App: React.FC = () => {
       mobileMainView,
       setMobileMainView,
       isAiSearching,
+      onOpenCalendar: () => setIsCalendarOpen(true),
+      onGenerateAiReply: handleGenerateAiReply,
+      isGeneratingReply,
     };
 
     switch (activeModule) {
@@ -754,6 +793,7 @@ const App: React.FC = () => {
         <div className="h-dvh w-screen flex flex-col overflow-hidden bg-background text-foreground">
           {isComposerOpen && <ComposerMobile onClose={handleCloseComposer} initialState={composerState} onSend={handleSendEmail} />}
           <SettingsViewMobile isOpen={isMobileSettingsOpen} onClose={handleCloseMobileSettings} />
+          <CalendarViewMobile isOpen={isCalendarOpen} onClose={() => setIsCalendarOpen(false)} />
           
           {uiTheme === 'classic' && (
             <MailboxSidebar 

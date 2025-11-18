@@ -20,13 +20,15 @@ interface EmailDetailHeaderProps {
     onSearchQueryChange: (query: string) => void;
     onOpenSearchFilters: (anchorEl: HTMLElement) => void;
     areFiltersActive: boolean;
+    onGenerateAiReply?: () => void;
+    isGeneratingReply?: boolean;
 }
 
 const EmailDetailHeader: React.FC<EmailDetailHeaderProps> = ({ 
     thread, onToggleAIAssistant, onBack, isDetailView, onDiscoverClick, 
     onScheduleMeetingClick, onSnoozeClick, onOpenKebabMenu, onUnsnooze, onSummarize, 
     isSummarizing, onComposeInteraction, onToggleStar, searchQuery, onSearchQueryChange,
-    onOpenSearchFilters, areFiltersActive
+    onOpenSearchFilters, areFiltersActive, onGenerateAiReply, isGeneratingReply
 }) => {
     
     return (
@@ -46,17 +48,30 @@ const EmailDetailHeader: React.FC<EmailDetailHeaderProps> = ({
                     />
                 </div>
                 {thread && (
-                    <Button 
-                        onClick={onSummarize}
-                        disabled={isSummarizing}
-                        variant="secondary"
-                        size="default"
-                        className="rounded-full inline-flex"
-                        title="Summarize thread"
-                    >
-                        <i className={`fa-solid fa-wand-magic-sparkles w-4 h-4 mr-2 ${isSummarizing ? 'animate-spin' : ''}`}></i>
-                        <span>Summarize</span>
-                    </Button>
+                    <>
+                        <Button 
+                            onClick={onSummarize}
+                            disabled={isSummarizing}
+                            variant="secondary"
+                            size="default"
+                            className="rounded-full inline-flex"
+                            title="Summarize thread"
+                        >
+                            <i className={`fa-solid fa-wand-magic-sparkles w-4 h-4 mr-2 ${isSummarizing ? 'animate-spin' : ''}`}></i>
+                            <span>Summarize</span>
+                        </Button>
+                        <Button 
+                            onClick={onGenerateAiReply}
+                            disabled={isGeneratingReply}
+                            variant="secondary"
+                            size="default"
+                            className="rounded-full inline-flex"
+                            title="Draft a reply"
+                        >
+                            <i className={`fa-solid fa-pen-sparkles w-4 h-4 mr-2 ${isGeneratingReply ? 'animate-spin' : ''}`}></i>
+                            <span>{isGeneratingReply ? 'Drafting...' : 'Draft Reply'}</span>
+                        </Button>
+                    </>
                 )}
                  <Button variant="secondary" size="default" className="rounded-full" onClick={onToggleAIAssistant} title="AI Assistant">
                     <i className="fa-solid fa-wand-magic-sparkles w-4 h-4 mr-2"></i>
