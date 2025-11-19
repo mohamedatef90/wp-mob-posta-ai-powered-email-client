@@ -277,13 +277,13 @@ const ComposerMobile: React.FC<ComposerMobileProps> = ({ onClose, initialState, 
                         <AICopilotIcon className="w-6 h-6" />
                     </Button>
                     <div className="relative">
-                        <Button variant="ghost" size="icon" onClick={() => setShowSendLaterMenu(!showSendLaterMenu)} className="h-12 w-12 text-blue-600 dark:text-blue-400">
-                            <SendLaterIcon className="w-7 h-7" />
+                        <Button variant="ghost" size="icon" onClick={() => setShowSendLaterMenu(!showSendLaterMenu)} className="h-10 w-10 text-blue-600 dark:text-blue-400">
+                            <SendLaterIcon className="w-6 h-6" />
                         </Button>
                         <SendLaterMenu isOpen={showSendLaterMenu} onClose={() => setShowSendLaterMenu(false)} onSelect={handleSendLaterSelect} />
                     </div>
                     <Button onClick={handleSend} disabled={!to.trim()} size="icon" className="h-10 w-10 bg-primary text-primary-foreground rounded-full shadow-sm hover:bg-primary/90">
-                        <i className="fa-solid fa-paper-plane w-4 h-4 text-white"></i>
+                        <i className="fa-solid fa-paper-plane text-xl text-white"></i>
                     </Button>
                 </div>
             </header>
@@ -298,8 +298,8 @@ const ComposerMobile: React.FC<ComposerMobileProps> = ({ onClose, initialState, 
                             placeholder="" 
                             className="w-full py-3 bg-transparent focus:outline-none text-base text-foreground flex-1"
                         />
-                        <Button variant="ghost" size="icon" onClick={() => setIsCcBccExpanded(prev => !prev)} className="h-10 w-10 text-muted-foreground">
-                            <i className={`fa-solid fa-chevron-down w-4 h-4 transition-transform duration-200 ${isCcBccExpanded ? 'rotate-180' : ''}`}></i>
+                        <Button variant="ghost" size="icon" onClick={() => setIsCcBccExpanded(prev => !prev)} className="h-8 w-8 text-muted-foreground">
+                            <i className={`fa-solid fa-chevron-down text-xs transition-transform duration-200 ${isCcBccExpanded ? 'rotate-180' : ''}`}></i>
                         </Button>
                     </div>
                     
@@ -357,31 +357,31 @@ const ComposerMobile: React.FC<ComposerMobileProps> = ({ onClose, initialState, 
                  {isFormattingOpen && (
                     <div className="bg-card/90 backdrop-blur-xl border border-border shadow-xl rounded-xl p-2 mb-2 animate-scaleIn flex flex-col gap-1 min-w-[150px]">
                         <button className="flex items-center gap-3 px-3 py-2 hover:bg-accent rounded-lg text-sm text-foreground transition-colors text-left w-full">
-                            <i className="fa-solid fa-bold w-5 text-center text-muted-foreground"></i> Bold
+                            <i className="fa-solid fa-bold w-3 text-center text-muted-foreground"></i> Bold
                         </button>
                         <button className="flex items-center gap-3 px-3 py-2 hover:bg-accent rounded-lg text-sm text-foreground transition-colors text-left w-full">
-                            <i className="fa-solid fa-italic w-5 text-center text-muted-foreground"></i> Italic
+                            <i className="fa-solid fa-italic w-3 text-center text-muted-foreground"></i> Italic
                         </button>
                         <button className="flex items-center gap-3 px-3 py-2 hover:bg-accent rounded-lg text-sm text-foreground transition-colors text-left w-full">
-                            <i className="fa-solid fa-underline w-5 text-center text-muted-foreground"></i> Underline
+                            <i className="fa-solid fa-underline w-3 text-center text-muted-foreground"></i> Underline
                         </button>
                          <button className="flex items-center gap-3 px-3 py-2 hover:bg-accent rounded-lg text-sm text-foreground transition-colors text-left w-full">
-                            <i className="fa-solid fa-list-ul w-5 text-center text-muted-foreground"></i> Bullet List
+                            <i className="fa-solid fa-list-ul w-3 text-center text-muted-foreground"></i> Bullet List
                         </button>
                          <button className="flex items-center gap-3 px-3 py-2 hover:bg-accent rounded-lg text-sm text-foreground transition-colors text-left w-full">
-                            <i className="fa-solid fa-list-ol w-5 text-center text-muted-foreground"></i> Ordered List
+                            <i className="fa-solid fa-list-ol w-3 text-center text-muted-foreground"></i> Ordered List
                         </button>
                     </div>
                  )}
                  
                  <div className="bg-white-500/30 backdrop-blur-3xl border border-white/40 dark:border-white/20 shadow-lg rounded-[2rem] px-2 py-1.5 flex items-center space-x-1">
                     <Button variant="ghost" size="icon" className="h-10 w-10 text-primary hover:bg-blue-500/20 rounded-full transition-colors" onClick={handleAttachClick}>
-                        <i className="fa-solid fa-paperclip text-lg"></i>
+                        <i className="fa-solid fa-paperclip text-xl"></i>
                     </Button>
                     <Button variant="ghost" size="icon" className="h-10 w-10 text-primary hover:bg-blue-500/20 rounded-full transition-colors" onClick={() => alert('Scan document')}>
-                        <i className="fa-solid fa-camera text-lg"></i>
+                        <i className="fa-solid fa-camera text-xl"></i>
                     </Button>
-                    <div className="w-px h-5 bg-primary/30 mx-1"></div>
+                    <div className="w-px h-6 bg-primary/30 mx-1"></div>
                     <Button 
                         variant="ghost" 
                         size="icon" 
