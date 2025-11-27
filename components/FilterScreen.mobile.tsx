@@ -1,4 +1,5 @@
 
+
 import React, { useState, useMemo, useEffect } from 'react';
 import type { SearchFilters } from '../App';
 import { ChevronRightIcon, ArrowLeftIcon, SearchIcon, XMarkIcon } from './Icons';
@@ -18,10 +19,12 @@ const ALL_LABELS = ['urgent', 'q3-strategy', 'team-event', 'social', 'action-req
 
 const DEFAULT_FILTERS: PartialSearchFilters = {
     sender: '',
+    recipient: '',
     dateRange: 'any',
     status: 'any',
     label: '',
     has: 'any',
+    attachmentType: 'any',
 };
 
 // --- Reusable Components ---
@@ -108,7 +111,7 @@ const IsScreen: React.FC<SubScreenProps> = ({ onBack, onSelect, currentValue }) 
     )
 };
 
-const WithScreen: React.FC<SubScreenProps & { allUsers: User[] }> = ({ onBack, onSelect, currentValue, allUsers }) => {
+const UserSelectScreen: React.FC<SubScreenProps & { allUsers: User[], title: string }> = ({ onBack, onSelect, currentValue, allUsers, title }) => {
     const [query, setQuery] = useState('');
     const filteredUsers = useMemo(() => {
         if (!query) return allUsers;
@@ -117,7 +120,7 @@ const WithScreen: React.FC<SubScreenProps & { allUsers: User[] }> = ({ onBack, o
     }, [query, allUsers]);
     return (
         <div className="h-full flex flex-col">
-            <FilterHeader title="With" onBack={onBack} />
+            <FilterHeader title={title} onBack={onBack} />
             <div className="p-4 border-b border-border">
                 <div className="relative">
                     <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
@@ -128,6 +131,29 @@ const WithScreen: React.FC<SubScreenProps & { allUsers: User[] }> = ({ onBack, o
                 <ListItem>
                      <RadioItem label="Anyone" isSelected={!currentValue} onClick={() => onSelect('')} />
                      {filteredUsers.map(user => <RadioItem key={user.email} label={user.name} isSelected={currentValue === user.email} onClick={() => onSelect(user.email)} />)}
+                </ListItem>
+            </main>
+        </div>
+    )
+};
+
+const AttachmentTypeScreen: React.FC<SubScreenProps> = ({ onBack, onSelect, currentValue }) => {
+    const options: SearchFilters['attachmentType'][] = ['any', 'document', 'spreadsheet', 'presentation', 'pdf', 'image', 'video'];
+    const labels: Record<string, string> = { 
+        any: 'Any', 
+        document: 'Documents', 
+        spreadsheet: 'Spreadsheets', 
+        presentation: 'Presentations', 
+        pdf: 'PDFs', 
+        image: 'Images', 
+        video: 'Videos' 
+    };
+    return (
+        <div className="h-full flex flex-col">
+            <FilterHeader title="Attachment" onBack={onBack} />
+            <main className="flex-1 overflow-y-auto p-4">
+                <ListItem>
+                    {options.map(opt => <RadioItem key={opt} label={labels[opt]} isSelected={currentValue === opt} onClick={() => onSelect(opt)} />)}
                 </ListItem>
             </main>
         </div>
@@ -266,16 +292,20 @@ const FilterScreenMobile: React.FC<FilterScreenMobileProps> = ({ isOpen, onClose
 
   const hasActiveFilters = useMemo(() => {
       return tempFilters.sender !== DEFAULT_FILTERS.sender ||
+             tempFilters.recipient !== DEFAULT_FILTERS.recipient ||
              tempFilters.dateRange !== DEFAULT_FILTERS.dateRange ||
              tempFilters.status !== DEFAULT_FILTERS.status ||
              tempFilters.label !== DEFAULT_FILTERS.label ||
-             tempFilters.has !== DEFAULT_FILTERS.has;
+             tempFilters.has !== DEFAULT_FILTERS.has ||
+             tempFilters.attachmentType !== DEFAULT_FILTERS.attachmentType;
   }, [tempFilters]);
 
   const renderView = () => {
       switch (view) {
           case 'is': return <IsScreen onBack={() => setView('main')} onSelect={handleSelect('status')} currentValue={tempFilters.status} />;
-          case 'with': return <WithScreen onBack={() => setView('main')} onSelect={handleSelect('sender')} currentValue={tempFilters.sender} allUsers={allUsers} />;
+          case 'from': return <UserSelectScreen title="From" onBack={() => setView('main')} onSelect={handleSelect('sender')} currentValue={tempFilters.sender} allUsers={allUsers} />;
+          case 'to': return <UserSelectScreen title="To" onBack={() => setView('main')} onSelect={handleSelect('recipient')} currentValue={tempFilters.recipient} allUsers={allUsers} />;
+          case 'attachmentType': return <AttachmentTypeScreen onBack={() => setView('main')} onSelect={handleSelect('attachmentType')} currentValue={tempFilters.attachmentType} />;
           case 'label': return <LabelScreen onBack={() => setView('main')} onSelect={handleSelect('label')} currentValue={tempFilters.label} />;
           case 'date': return <DateScreen onBack={() => setView('main')} onSelect={handleSelect('dateRange')} currentValue={tempFilters.dateRange} />;
           case 'has': return <HasScreen onBack={() => setView('main')} onSelect={handleSelect('has')} currentValue={tempFilters.has} />;
@@ -284,7 +314,11 @@ const FilterScreenMobile: React.FC<FilterScreenMobileProps> = ({ isOpen, onClose
               const dateLabels: Record<string, string> = { any: 'Any time', '7d': 'Last 7 days', '30d': 'Last 30 days' };
               const hasLabels: Record<string, string> = { any: 'Any', attachment: 'Attachment', mention: 'Mention', comment: 'Comment' };
               
-              const withLabel = tempFilters.sender ? allUsers.find(u => u.email === tempFilters.sender)?.name || tempFilters.sender : 'Anyone';
+              const fromLabel = tempFilters.sender ? allUsers.find(u => u.email === tempFilters.sender)?.name || tempFilters.sender : 'Anyone';
+              const toLabel = tempFilters.recipient ? allUsers.find(u => u.email === tempFilters.recipient)?.name || tempFilters.recipient : 'Anyone';
+              const attachmentLabel = tempFilters.attachmentType && tempFilters.attachmentType !== 'any' 
+                ? tempFilters.attachmentType.charAt(0).toUpperCase() + tempFilters.attachmentType.slice(1) 
+                : 'Any';
               
               let dateLabel = 'Any time';
               if (typeof tempFilters.dateRange === 'string') {
@@ -304,11 +338,13 @@ const FilterScreenMobile: React.FC<FilterScreenMobileProps> = ({ isOpen, onClose
                       />
                       <main className="flex-1 overflow-y-auto">
                           <ListItem className="m-4">
-                              <FilterItem title="Is" hint="Filter by status like unread, sent" value={isLabels[tempFilters.status as string] || 'Any'} onClick={() => setView('is')} />
-                              <FilterItem title="With" hint="Filter by sender or recipient" value={withLabel} onClick={() => setView('with')} />
-                              <FilterItem title="Label" hint="Filter by assigned labels" value={tempFilters.label || 'Any'} onClick={() => setView('label')} />
-                              <FilterItem title="Date" hint="Filter by time period" value={dateLabel} onClick={() => setView('date')} />
-                              <FilterItem title="Has" hint="Filter emails that have attachments, etc." value={hasLabels[tempFilters.has as string] || 'Any'} onClick={() => setView('has')} />
+                              <FilterItem title="From" hint="Sender" value={fromLabel} onClick={() => setView('from')} />
+                              <FilterItem title="To" hint="Recipient" value={toLabel} onClick={() => setView('to')} />
+                              <FilterItem title="Is" hint="Status" value={isLabels[tempFilters.status as string] || 'Any'} onClick={() => setView('is')} />
+                              <FilterItem title="Attachment" hint="File type" value={attachmentLabel} onClick={() => setView('attachmentType')} />
+                              <FilterItem title="Date" hint="Time period" value={dateLabel} onClick={() => setView('date')} />
+                              <FilterItem title="Label" hint="Tags" value={tempFilters.label || 'Any'} onClick={() => setView('label')} />
+                              <FilterItem title="Has" hint="Attributes" value={hasLabels[tempFilters.has as string] || 'Any'} onClick={() => setView('has')} />
                           </ListItem>
                       </main>
                   </div>

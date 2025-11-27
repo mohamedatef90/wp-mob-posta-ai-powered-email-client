@@ -36,11 +36,13 @@ import FilterScreenMobile from './components/FilterScreen.mobile';
 export interface SearchFilters {
   query: string;
   sender: string;
+  recipient: string;
   dateRange: 'any' | '7d' | '30d' | { start?: string; end?: string };
   status: 'any' | 'read' | 'unread' | 'sent' | 'starred' | 'snoozed';
   label: string;
   fileName: string;
   has: 'any' | 'attachment' | 'mention' | 'comment';
+  attachmentType: 'any' | 'document' | 'spreadsheet' | 'presentation' | 'pdf' | 'image' | 'video';
 }
 
 const App: React.FC = () => {
@@ -70,11 +72,13 @@ const App: React.FC = () => {
   const [searchFilters, setSearchFilters] = useState<SearchFilters>({
     query: '',
     sender: '',
+    recipient: '',
     dateRange: 'any',
     status: 'any',
     label: '',
     fileName: '',
     has: 'any',
+    attachmentType: 'any',
   });
   const [isSearchFilterOpen, setIsSearchFilterOpen] = useState(false);
   const [searchFilterAnchorEl, setSearchFilterAnchorEl] = useState<HTMLElement | null>(null);
@@ -702,7 +706,7 @@ const App: React.FC = () => {
     }
 
     const hasSearchQuery = !!searchFilters.query.trim();
-    const hasOtherFilters = !!searchFilters.sender.trim() || searchFilters.dateRange !== 'any' || searchFilters.status !== 'any' || searchFilters.label || searchFilters.fileName || searchFilters.has !== 'any';
+    const hasOtherFilters = !!searchFilters.sender.trim() || !!searchFilters.recipient.trim() || searchFilters.dateRange !== 'any' || searchFilters.status !== 'any' || searchFilters.label || searchFilters.fileName || searchFilters.has !== 'any' || searchFilters.attachmentType !== 'any';
     const isActuallySearching = hasSearchQuery || hasOtherFilters || aiFilteredThreadIds !== null;
 
     if (!isActuallySearching) {
@@ -728,7 +732,13 @@ const App: React.FC = () => {
     // Advanced Filters
     if (searchFilters.sender) {
         const senderLower = searchFilters.sender.toLowerCase();
-        result = result.filter(t => t.participants.some(p => p.email.toLowerCase() === senderLower || p.name.toLowerCase().includes(senderLower)));
+        // Stricter check for From: check if any message sender matches
+        result = result.filter(t => t.messages.some(m => m.sender.email.toLowerCase().includes(senderLower) || m.sender.name.toLowerCase().includes(senderLower)));
+    }
+    if (searchFilters.recipient) {
+        const recipientLower = searchFilters.recipient.toLowerCase();
+        // Check participants
+        result = result.filter(t => t.participants.some(p => p.email.toLowerCase().includes(recipientLower) || p.name.toLowerCase().includes(recipientLower)));
     }
     if (searchFilters.status !== 'any') {
         if (searchFilters.status === 'read') result = result.filter(t => t.isRead);
@@ -750,6 +760,23 @@ const App: React.FC = () => {
             result = result.filter(t => t.messages.some(m => m.attachments && m.attachments.length > 0));
         }
         // 'mention' and 'comment' are not in data model, so they won't filter anything.
+    }
+    if (searchFilters.attachmentType !== 'any') {
+        const type = searchFilters.attachmentType;
+        result = result.filter(t => t.messages.some(m => m.attachments?.some(a => {
+            const name = a.filename.toLowerCase();
+            const ext = name.split('.').pop();
+            if (!ext) return false;
+            switch(type) {
+                case 'pdf': return ext === 'pdf';
+                case 'image': return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext);
+                case 'video': return ['mp4', 'mov', 'avi', 'mkv'].includes(ext);
+                case 'document': return ['doc', 'docx', 'txt', 'rtf'].includes(ext);
+                case 'spreadsheet': return ['xls', 'xlsx', 'csv'].includes(ext);
+                case 'presentation': return ['ppt', 'pptx'].includes(ext);
+                default: return false;
+            }
+        })));
     }
     if (searchFilters.dateRange !== 'any') {
         const now = new Date();
