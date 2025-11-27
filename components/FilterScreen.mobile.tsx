@@ -1,5 +1,3 @@
-
-
 import React, { useState, useMemo, useEffect } from 'react';
 import type { SearchFilters } from '../App';
 import { ChevronRightIcon, ArrowLeftIcon, SearchIcon, XMarkIcon } from './Icons';
@@ -55,13 +53,10 @@ const FilterHeader: React.FC<{
 );
 
 
-const FilterItem: React.FC<{ title: string; hint: string; value: string; onClick: () => void; }> = ({ title, hint, value, onClick }) => (
+const FilterItem: React.FC<{ title: string; value: string; onClick: () => void; }> = ({ title, value, onClick }) => (
     <button onClick={onClick} className="w-full text-left p-4 active:bg-secondary">
         <div className="flex justify-between items-center">
-            <div>
-                <p className="font-medium text-foreground">{title}</p>
-                <p className="text-sm text-muted-foreground mt-1">{hint}</p>
-            </div>
+            <p className="font-medium text-foreground">{title}</p>
             <div className="flex items-center space-x-2">
                 <span className="text-sm text-muted-foreground max-w-[120px] truncate">{value}</span>
                 <ChevronRightIcon className="w-5 h-5 text-muted-foreground" />
@@ -338,13 +333,13 @@ const FilterScreenMobile: React.FC<FilterScreenMobileProps> = ({ isOpen, onClose
                       />
                       <main className="flex-1 overflow-y-auto">
                           <ListItem className="m-4">
-                              <FilterItem title="From" hint="Sender" value={fromLabel} onClick={() => setView('from')} />
-                              <FilterItem title="To" hint="Recipient" value={toLabel} onClick={() => setView('to')} />
-                              <FilterItem title="Is" hint="Status" value={isLabels[tempFilters.status as string] || 'Any'} onClick={() => setView('is')} />
-                              <FilterItem title="Attachment" hint="File type" value={attachmentLabel} onClick={() => setView('attachmentType')} />
-                              <FilterItem title="Date" hint="Time period" value={dateLabel} onClick={() => setView('date')} />
-                              <FilterItem title="Label" hint="Tags" value={tempFilters.label || 'Any'} onClick={() => setView('label')} />
-                              <FilterItem title="Has" hint="Attributes" value={hasLabels[tempFilters.has as string] || 'Any'} onClick={() => setView('has')} />
+                              <FilterItem title="From" value={fromLabel} onClick={() => setView('from')} />
+                              <FilterItem title="To" value={toLabel} onClick={() => setView('to')} />
+                              <FilterItem title="Is" value={isLabels[tempFilters.status as string] || 'Any'} onClick={() => setView('is')} />
+                              <FilterItem title="Attachment" value={attachmentLabel} onClick={() => setView('attachmentType')} />
+                              <FilterItem title="Date" value={dateLabel} onClick={() => setView('date')} />
+                              <FilterItem title="Label" value={tempFilters.label || 'Any'} onClick={() => setView('label')} />
+                              <FilterItem title="Has" value={hasLabels[tempFilters.has as string] || 'Any'} onClick={() => setView('has')} />
                           </ListItem>
                       </main>
                   </div>
