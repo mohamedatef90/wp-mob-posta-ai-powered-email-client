@@ -1,9 +1,12 @@
+
+
+// ... (keep imports)
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import Sidebar from './components/Sidebar';
 import AIAssistant from './components/AIAssistant';
 import CopilotView from './components/CopilotView';
 import ChatView from './components/ChatView';
-import { MOCK_THREADS, you, youLiverpool, PROFESSIONAL_THREADS, youInnovate } from './constants';
+import { MOCK_THREADS, you, youLiverpool, PROFESSIONAL_THREADS, youInnovate, allUsers } from './constants';
 import type { Thread, Message } from './types';
 import PrimarySidebar from './components/PrimarySidebar';
 import DiscoverModal from './components/DiscoverModal';
@@ -26,14 +29,18 @@ import MobileBottomNav from './components/MobileBottomNav';
 import ComposerMobile from './components/Composer.mobile';
 import { SettingsViewMobile } from './components/SettingsView.mobile';
 import MailboxSidebar from './components/MailboxSidebar';
-import { CalendarViewMobile } from './components/CalendarView.mobile';
+import { CalendarViewMobile, MockEvent } from './components/CalendarView.mobile';
+import FilterScreenMobile from './components/FilterScreen.mobile';
 
 
 export interface SearchFilters {
   query: string;
   sender: string;
-  dateRange: 'any' | '7d' | '30d';
-  status: 'any' | 'read' | 'unread';
+  dateRange: 'any' | '7d' | '30d' | { start?: string; end?: string };
+  status: 'any' | 'read' | 'unread' | 'sent' | 'starred' | 'snoozed';
+  label: string;
+  fileName: string;
+  has: 'any' | 'attachment' | 'mention' | 'comment';
 }
 
 const App: React.FC = () => {
@@ -65,6 +72,9 @@ const App: React.FC = () => {
     sender: '',
     dateRange: 'any',
     status: 'any',
+    label: '',
+    fileName: '',
+    has: 'any',
   });
   const [isSearchFilterOpen, setIsSearchFilterOpen] = useState(false);
   const [searchFilterAnchorEl, setSearchFilterAnchorEl] = useState<HTMLElement | null>(null);
@@ -76,6 +86,10 @@ const App: React.FC = () => {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [isBulkModeActive, setIsBulkModeActive] = useState(false);
   const [previousActiveModule, setPreviousActiveModule] = useState<Module>('email');
+  const [isFilterScreenOpen, setIsFilterScreenOpen] = useState(false);
+  
+  // Calendar Event Creation State
+  const [calendarInitialEvent, setCalendarInitialEvent] = useState<Partial<MockEvent> | undefined>(undefined);
 
 
   const [theme, setTheme] = useState<Theme>(
@@ -607,12 +621,29 @@ const App: React.FC = () => {
     setIsSearchFilterOpen(false);
   };
   
-  const handleApplySearchFilters = (newFilters: Omit<SearchFilters, 'query'>) => {
+  const handleApplySearchFilters = (newFilters: Partial<SearchFilters>) => {
       setSearchFilters(prev => ({ ...prev, ...newFilters }));
   };
   
   const handleSearchQueryChange = (query: string) => {
       setSearchFilters(prev => ({ ...prev, query }));
+  };
+
+  const handleAddToCalendar = (thread: Thread) => {
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() + 1); // Default to tomorrow
+        startDate.setHours(10, 0, 0, 0);
+        const endDate = new Date(startDate);
+        endDate.setHours(11, 0, 0, 0);
+
+        setCalendarInitialEvent({
+            title: thread.subject.replace(/^(Invitation:|Re:|Fwd:)\s*/i, '').trim(),
+            description: `From email: "${thread.subject}"\n\n` + thread.messages[0].body.replace(/<[^>]*>/g, '\n').substring(0, 200) + '...',
+            start: startDate,
+            end: endDate,
+            location: 'TBD'
+        });
+        setIsCalendarOpen(true);
   };
 
   const { filteredThreads, isSearching, areFiltersActive } = useMemo(() => {
@@ -629,7 +660,29 @@ const App: React.FC = () => {
           !isSnoozed(t)
         );
         break;
-      // Other cases omitted for brevity, logic remains the same
+      case 'starred':
+        baseFilteredThreads = threads.filter(t => t.isStarred && !t.isArchived);
+        break;
+      case 'snoozed':
+        baseFilteredThreads = threads.filter(t => isSnoozed(t));
+        break;
+      case 'scheduled':
+        // Placeholder for scheduled emails
+        baseFilteredThreads = []; 
+        break;
+      case 'archive':
+        baseFilteredThreads = threads.filter(t => t.isArchived);
+        break;
+      case 'todos':
+        baseFilteredThreads = threads.filter(t => t.category === 'todos' && !t.isArchived && !isSnoozed(t));
+        break;
+      case 'sent':
+         // Simple filter based on mock IDs for robustness in this demo context
+         baseFilteredThreads = threads.filter(t => t.id.startsWith('sent-') || t.id.startsWith('lfc-sent-') || t.id.startsWith('prof-sent-'));
+         break;
+      case 'drafts':
+         baseFilteredThreads = threads.filter(t => t.id.startsWith('draft') || t.id.startsWith('lfc-draft'));
+         break;
       default:
         baseFilteredThreads = threads.filter(t => 
           !t.isArchived &&
@@ -649,18 +702,20 @@ const App: React.FC = () => {
     }
 
     const hasSearchQuery = !!searchFilters.query.trim();
-    const hasOtherFilters = !!searchFilters.sender.trim() || searchFilters.dateRange !== 'any' || searchFilters.status !== 'any';
+    const hasOtherFilters = !!searchFilters.sender.trim() || searchFilters.dateRange !== 'any' || searchFilters.status !== 'any' || searchFilters.label || searchFilters.fileName || searchFilters.has !== 'any';
     const isActuallySearching = hasSearchQuery || hasOtherFilters || aiFilteredThreadIds !== null;
 
     if (!isActuallySearching) {
         return { filteredThreads: result, isSearching: false, areFiltersActive: false };
     }
 
+    // AI Search takes precedence
     if (aiFilteredThreadIds !== null) {
         const aiFiltered = result.filter(t => aiFilteredThreadIds.includes(t.id));
         return { filteredThreads: aiFiltered, isSearching: true, areFiltersActive: true };
     }
-
+    
+    // Regular text query
     if (hasSearchQuery) {
         const query = searchFilters.query.toLowerCase();
         result = result.filter(thread => 
@@ -668,6 +723,43 @@ const App: React.FC = () => {
             thread.participants.some(p => p.name.toLowerCase().includes(query) || p.email.toLowerCase().includes(query)) ||
             thread.messages.some(m => m.body.replace(/<[^>]*>/g, '').toLowerCase().includes(query))
         );
+    }
+
+    // Advanced Filters
+    if (searchFilters.sender) {
+        const senderLower = searchFilters.sender.toLowerCase();
+        result = result.filter(t => t.participants.some(p => p.email.toLowerCase() === senderLower || p.name.toLowerCase().includes(senderLower)));
+    }
+    if (searchFilters.status !== 'any') {
+        if (searchFilters.status === 'read') result = result.filter(t => t.isRead);
+        if (searchFilters.status === 'unread') result = result.filter(t => !t.isRead);
+        if (searchFilters.status === 'starred') result = result.filter(t => t.isStarred);
+        if (searchFilters.status === 'snoozed') result = result.filter(isSnoozed);
+        if (searchFilters.status === 'sent') result = result.filter(t => t.id.startsWith('sent-'));
+    }
+    if (searchFilters.label) {
+        const labelLower = searchFilters.label.toLowerCase();
+        result = result.filter(t => t.tags?.some(tag => tag.toLowerCase() === labelLower));
+    }
+    if (searchFilters.fileName) {
+        const fileNameLower = searchFilters.fileName.toLowerCase();
+        result = result.filter(t => t.messages.some(m => m.attachments?.some(a => a.filename.toLowerCase().includes(fileNameLower))));
+    }
+    if (searchFilters.has !== 'any') {
+        if (searchFilters.has === 'attachment') {
+            result = result.filter(t => t.messages.some(m => m.attachments && m.attachments.length > 0));
+        }
+        // 'mention' and 'comment' are not in data model, so they won't filter anything.
+    }
+    if (searchFilters.dateRange !== 'any') {
+        const now = new Date();
+        let startDate = new Date();
+        if (searchFilters.dateRange === '7d') {
+            startDate.setDate(now.getDate() - 7);
+        } else if (searchFilters.dateRange === '30d') {
+            startDate.setDate(now.getDate() - 30);
+        }
+        result = result.filter(t => new Date(t.timestamp) >= startDate);
     }
     
     return { filteredThreads: result, isSearching: isActuallySearching, areFiltersActive: isActuallySearching };
@@ -771,6 +863,8 @@ const App: React.FC = () => {
       onOpenCalendar: () => setIsCalendarOpen(true),
       onGenerateAiReply: handleGenerateAiReply,
       isGeneratingReply,
+      onAddToCalendar: handleAddToCalendar,
+      onOpenFilters: () => setIsFilterScreenOpen(true),
     };
 
     switch (activeModule) {
@@ -793,7 +887,14 @@ const App: React.FC = () => {
         <div className="h-dvh w-screen flex flex-col overflow-hidden bg-background text-foreground">
           {isComposerOpen && <ComposerMobile onClose={handleCloseComposer} initialState={composerState} onSend={handleSendEmail} />}
           <SettingsViewMobile isOpen={isMobileSettingsOpen} onClose={handleCloseMobileSettings} />
-          <CalendarViewMobile isOpen={isCalendarOpen} onClose={() => setIsCalendarOpen(false)} />
+          <CalendarViewMobile isOpen={isCalendarOpen} onClose={() => setIsCalendarOpen(false)} initialEventData={calendarInitialEvent} />
+          <FilterScreenMobile 
+            isOpen={isFilterScreenOpen}
+            onClose={() => setIsFilterScreenOpen(false)}
+            currentFilters={searchFilters}
+            onApplyFilters={handleApplySearchFilters}
+            allUsers={allUsers}
+          />
           
           {uiTheme === 'classic' && (
             <MailboxSidebar 

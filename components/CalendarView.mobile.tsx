@@ -1,4 +1,5 @@
 
+
 import React, { useState, useRef, useEffect, useContext } from 'react';
 import { XMarkIcon, SearchIcon, PlusIcon, ChevronRightIcon, CalendarDaysIcon, MapPinIcon, BellIcon, GlobeAmericasIcon, RepeatIcon, EyeIcon, EyeSlashIcon, UserIcon, ClockIcon, TrashIcon } from './Icons';
 import { Button } from './ui/Button';
@@ -22,7 +23,7 @@ const formatTimeRange = (start: Date, end: Date) => {
 };
 
 // --- Interfaces ---
-interface MockEvent {
+export interface MockEvent {
     id: string;
     title: string;
     start: Date;
@@ -152,6 +153,121 @@ const SettingsItem: React.FC<{
     );
 };
 
+// --- Reminder Modals ---
+
+const CustomReminderModal: React.FC<{
+    isOpen: boolean;
+    onClose: () => void;
+    onSave: (value: string) => void;
+}> = ({ isOpen, onClose, onSave }) => {
+    const [val, setVal] = useState('10');
+    const [unit, setUnit] = useState('minutes');
+
+    if (!isOpen) return null;
+
+    const handleSave = () => {
+        onSave(`${val} ${unit} before`);
+        onClose();
+    }
+
+    return (
+        <div className="fixed inset-0 z-[80] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn" onClick={onClose}>
+            <div className="bg-card w-full max-w-xs rounded-2xl shadow-xl p-6 animate-scaleIn" onClick={e => e.stopPropagation()}>
+                <h3 className="text-lg font-bold mb-4 text-foreground">Custom Reminder</h3>
+                <div className="flex gap-2 mb-6">
+                    <input 
+                        type="number" 
+                        value={val} 
+                        onChange={e => setVal(e.target.value)}
+                        className="w-20 bg-secondary border-none rounded-lg p-2 text-center focus:ring-2 focus:ring-primary outline-none text-foreground"
+                    />
+                    <div className="flex-1 relative">
+                        <select 
+                            value={unit}
+                            onChange={e => setUnit(e.target.value)}
+                            className="w-full bg-secondary appearance-none rounded-lg p-2 px-3 outline-none focus:ring-2 focus:ring-primary text-foreground"
+                        >
+                            <option value="minutes">minutes</option>
+                            <option value="hours">hours</option>
+                            <option value="days">days</option>
+                            <option value="weeks">weeks</option>
+                        </select>
+                        <ChevronRightIcon className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 rotate-90 pointer-events-none text-muted-foreground" />
+                    </div>
+                </div>
+                <div className="flex justify-end gap-2">
+                    <Button variant="ghost" onClick={onClose}>Cancel</Button>
+                    <Button onClick={handleSave}>Set</Button>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+const ReminderOptionsModal: React.FC<{
+    isOpen: boolean;
+    onClose: () => void;
+    selectedValue: string;
+    onSelect: (value: string) => void;
+}> = ({ isOpen, onClose, selectedValue, onSelect }) => {
+    const [showCustom, setShowCustom] = useState(false);
+
+    if (!isOpen) return null;
+
+    const options = [
+        'None',
+        'At time of event',
+        '5 minutes before',
+        '10 minutes before',
+        '15 minutes before',
+        '30 minutes before',
+        '1 hour before',
+        '1 day before',
+        'Custom...'
+    ];
+
+    const handleSelectOption = (opt: string) => {
+        if (opt === 'Custom...') {
+            setShowCustom(true);
+        } else {
+            onSelect(opt);
+            onClose();
+        }
+    };
+
+    if (showCustom) {
+        return <CustomReminderModal isOpen={true} onClose={() => {setShowCustom(false); onClose();}} onSave={(val) => { onSelect(val); onClose(); }} />;
+    }
+
+    return (
+        <div className="fixed inset-0 z-[70] bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-4 animate-fadeIn" onClick={onClose}>
+            <div className="bg-card w-full max-w-sm rounded-2xl shadow-xl overflow-hidden animate-fadeInUp" onClick={e => e.stopPropagation()}>
+                <div className="p-4 border-b border-border">
+                    <h3 className="font-bold text-lg text-center text-foreground">Remind me</h3>
+                </div>
+                <div className="max-h-80 overflow-y-auto">
+                    {options.map(opt => (
+                        <button
+                            key={opt}
+                            onClick={() => handleSelectOption(opt)}
+                            className={cn(
+                                "w-full text-left px-6 py-3.5 text-base transition-colors flex justify-between items-center",
+                                opt === selectedValue ? 'text-primary font-semibold bg-primary/5' : 'text-foreground hover:bg-accent'
+                            )}
+                        >
+                            {opt}
+                            {opt === selectedValue && <div className="w-2 h-2 rounded-full bg-primary"></div>}
+                        </button>
+                    ))}
+                </div>
+                <div className="p-2">
+                    <button onClick={onClose} className="w-full py-3 rounded-xl font-semibold text-primary hover:bg-accent transition-colors">Cancel</button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // --- Add/Edit Event Screen ---
 
 interface AddEventScreenProps {
@@ -159,9 +275,10 @@ interface AddEventScreenProps {
     initialStartDate?: string;
     eventToEdit?: MockEvent | null;
     onSave: (event: MockEvent) => void;
+    initialData?: Partial<MockEvent>;
 }
 
-const AddEventScreen: React.FC<AddEventScreenProps> = ({ onClose, initialStartDate, eventToEdit, onSave }) => {
+const AddEventScreen: React.FC<AddEventScreenProps> = ({ onClose, initialStartDate, eventToEdit, onSave, initialData }) => {
     const [title, setTitle] = useState('');
     const [allDay, setAllDay] = useState(false);
     const [startDate, setStartDate] = useState(toLocalISOString(new Date()));
@@ -172,6 +289,7 @@ const AddEventScreen: React.FC<AddEventScreenProps> = ({ onClose, initialStartDa
     const [isBusy, setIsBusy] = useState(true);
     const [remindMe, setRemindMe] = useState('10 minutes before');
     const [repeat, setRepeat] = useState('Never');
+    const [isReminderModalOpen, setIsReminderModalOpen] = useState(false);
 
     useEffect(() => {
         if (eventToEdit) {
@@ -180,12 +298,18 @@ const AddEventScreen: React.FC<AddEventScreenProps> = ({ onClose, initialStartDa
             setEndDate(toLocalISOString(eventToEdit.end));
             setLocation(eventToEdit.location || '');
             setDescription(eventToEdit.description || '');
+        } else if (initialData) {
+            setTitle(initialData.title || '');
+            if (initialData.start) setStartDate(toLocalISOString(initialData.start));
+            if (initialData.end) setEndDate(toLocalISOString(initialData.end));
+            setLocation(initialData.location || '');
+            setDescription(initialData.description || '');
         } else if (initialStartDate) {
             setStartDate(initialStartDate);
             const start = new Date(initialStartDate);
             setEndDate(toLocalISOString(new Date(start.getTime() + 3600000)));
         }
-    }, [eventToEdit, initialStartDate]);
+    }, [eventToEdit, initialStartDate, initialData]);
 
     const handleSave = () => {
         const newEvent: MockEvent = {
@@ -291,7 +415,12 @@ const AddEventScreen: React.FC<AddEventScreenProps> = ({ onClose, initialStartDa
 
                 {/* Card 5: Settings */}
                 <SettingsCard>
-                    <SettingsItem title="Remind me" value={remindMe} onClick={() => {}} icon={<BellIcon className="w-6 h-6" />} />
+                    <SettingsItem 
+                        title="Remind me" 
+                        value={remindMe} 
+                        onClick={() => setIsReminderModalOpen(true)} 
+                        icon={<BellIcon className="w-6 h-6" />} 
+                    />
                     <SettingsItem title="Show as" value={isBusy ? "Busy" : "Free"} onClick={() => setIsBusy(!isBusy)} icon={<EyeIcon className="w-6 h-6" />} />
                     <SettingsItem 
                         title="Private" 
@@ -310,6 +439,12 @@ const AddEventScreen: React.FC<AddEventScreenProps> = ({ onClose, initialStartDa
                      </div>
                 )}
             </main>
+            <ReminderOptionsModal 
+                isOpen={isReminderModalOpen} 
+                onClose={() => setIsReminderModalOpen(false)}
+                selectedValue={remindMe}
+                onSelect={setRemindMe}
+            />
         </div>
     );
 };
@@ -319,9 +454,10 @@ const AddEventScreen: React.FC<AddEventScreenProps> = ({ onClose, initialStartDa
 interface CalendarViewMobileProps {
   isOpen: boolean;
   onClose: () => void;
+  initialEventData?: Partial<MockEvent>;
 }
 
-export const CalendarViewMobile: React.FC<CalendarViewMobileProps> = ({ isOpen, onClose }) => {
+export const CalendarViewMobile: React.FC<CalendarViewMobileProps> = ({ isOpen, onClose, initialEventData }) => {
     const { accounts, activeDomain } = useContext(AppContext);
     const [viewMode, setViewMode] = useState<'Agenda' | 'Day' | 'Month'>('Agenda');
     const [isViewDropdownOpen, setIsViewDropdownOpen] = useState(false);
@@ -396,6 +532,14 @@ export const CalendarViewMobile: React.FC<CalendarViewMobileProps> = ({ isOpen, 
             setEvents(initialEvents);
         }
     }, []);
+
+    // Handle incoming initialEventData (from "Add to Calendar" button)
+    useEffect(() => {
+        if (initialEventData) {
+            setEventToEdit(null); // New event mode
+            setIsAddEventOpen(true);
+        }
+    }, [initialEventData]);
 
     // Scroll to selected day when it changes (specifically for Agenda view)
     useEffect(() => {
@@ -808,6 +952,7 @@ export const CalendarViewMobile: React.FC<CalendarViewMobileProps> = ({ isOpen, 
                         initialStartDate={newEventStartDate} 
                         eventToEdit={eventToEdit}
                         onSave={handleSaveEvent}
+                        initialData={initialEventData}
                     />
                 )}
 

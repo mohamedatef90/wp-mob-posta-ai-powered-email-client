@@ -1,12 +1,16 @@
-import React, { useState, useRef, useMemo, useContext, useEffect, useLayoutEffect } from 'react';
+
+
+
+// ... (keep imports)
+import React, { useState, useRef, useMemo, useContext, useEffect } from 'react';
 import type { Thread, User } from '../types';
 import EmailListItemMobile from './EmailListItem.mobile';
 import EmailListHeaderMobile from './EmailListHeader.mobile';
-// FIX: Import Domain type to use in props
 import { AppContext, type Domain } from './context/AppContext';
 
 const cn = (...classes: (string | boolean | undefined)[]) => classes.filter(Boolean).join(' ');
 
+// ... (keep BulkActionBarMobile and Pill components same as original)
 const BulkActionBarMobile: React.FC<{ onFlag: () => void; onMove: () => void; onDelete: () => void; selectedCount: number; onMarkAsRead: () => void; areAllSelectedRead: boolean; }> = ({ onFlag, onMove, onDelete, selectedCount, onMarkAsRead, areAllSelectedRead }) => {
     const ActionButton: React.FC<{ icon: string; label: string; onClick: () => void; disabled: boolean }> = ({ icon, label, onClick, disabled }) => (
         <div className="flex flex-col items-center">
@@ -78,13 +82,14 @@ interface EmailListMobileProps {
   onClearSelection: () => void;
   currentUser: User;
   onCompose: () => void;
-  // FIX: Use Domain type for onNavigate prop to match what EmailView passes.
   onNavigate: (view: string, domain?: Domain) => void;
   searchQuery: string;
   onSearchQueryChange: (query: string) => void;
   onBulkModeChange: (isActive: boolean) => void;
   isAiSearching: boolean;
   onOpenCalendar?: () => void;
+  onOpenFilters?: () => void;
+  areFiltersActive?: boolean;
 }
 
 const pills = [
@@ -101,7 +106,6 @@ const EmailListMobile: React.FC<EmailListMobileProps> = (props) => {
   const [activePill, setActivePill] = useState('primary');
   const [isBulkSelecting, setIsBulkSelecting] = useState(false);
     
-  const containerRef = useRef<HTMLDivElement>(null);
   const pillsContainerRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
@@ -123,8 +127,6 @@ const EmailListMobile: React.FC<EmailListMobileProps> = (props) => {
         // Default to 'primary' when viewing the main inbox
         setActivePill('primary');
     }
-    // If activeView is something else like 'starred', we let the activePill state persist,
-    // allowing users to filter starred items by category using the pills.
   }, [activeView]);
 
   useEffect(() => {
@@ -145,50 +147,145 @@ const EmailListMobile: React.FC<EmailListMobileProps> = (props) => {
       }
   };
 
-  const filteredThreads = useMemo(() => {
-    if (activePill === 'all') {
-      return props.threads;
-    }
-    return props.threads.filter(t => t.category.toLowerCase() === activePill.toLowerCase());
-  }, [props.threads, activePill]);
+  // --- Grouping Logic ---
 
-  const { todayThreads, yesterdayThreads, olderThreads } = useMemo(() => {
-    const today = new Date();
-    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const startOfYesterday = new Date(startOfToday);
-    startOfYesterday.setDate(startOfYesterday.getDate() - 1);
-
-    const todayTh = filteredThreads.filter(t => new Date(t.timestamp) >= startOfToday);
-    const yesterdayTh = filteredThreads.filter(t => new Date(t.timestamp) < startOfToday && new Date(t.timestamp) >= startOfYesterday);
-    const olderTh = filteredThreads.filter(t => new Date(t.timestamp) < startOfYesterday);
-      
-    return { todayThreads: todayTh, yesterdayThreads: yesterdayTh, olderThreads: olderTh };
-  }, [filteredThreads]);
-
-  const Section: React.FC<{title: string, threads: Thread[]}> = ({title, threads}) => {
-      if(threads.length === 0) return null;
-      return (
-          <>
-            <h2 className="px-4 pt-4 pb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{title}</h2>
-            {threads.map(thread => (
-                <EmailListItemMobile
-                    key={thread.id}
-                    thread={thread}
-                    isSelectedForBulk={selectedThreadIds.includes(thread.id)}
-                    onSelect={onSelectThread}
-                    selectedThreadIds={selectedThreadIds}
-                    onToggleSelection={onToggleSelection}
-                    onContextMenu={onContextMenu}
-                    onArchive={onArchive}
-                    onDelete={onDelete}
-                    isBulkSelecting={isBulkSelecting}
-                    setIsBulkSelecting={setIsBulkSelecting}
-                    {...props}
-                />
-            ))}
-          </>
-      )
+  interface ThreadSection {
+      title: string;
+      threads: Thread[];
   }
+
+  const sections = useMemo<ThreadSection[]>(() => {
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const tomorrowStart = new Date(todayStart);
+      tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+      const nextWeekStart = new Date(todayStart);
+      nextWeekStart.setDate(nextWeekStart.getDate() + 7);
+
+      if (activeView === 'snoozed') {
+          // SNOOZED VIEW: Sort by future snoozedUntil date
+          const snoozedThreads = props.threads
+            .filter(t => t.snoozedUntil && new Date(t.snoozedUntil) > now)
+            .sort((a, b) => new Date(a.snoozedUntil!).getTime() - new Date(b.snoozedUntil!).getTime());
+
+          const laterToday: Thread[] = [];
+          const tomorrow: Thread[] = [];
+          const thisWeek: Thread[] = [];
+          const future: Thread[] = [];
+
+          snoozedThreads.forEach(t => {
+              const date = new Date(t.snoozedUntil!);
+              if (date < tomorrowStart) {
+                  laterToday.push(t);
+              } else if (date < new Date(tomorrowStart.getTime() + 86400000)) { // Tomorrow end
+                  tomorrow.push(t);
+              } else if (date < nextWeekStart) {
+                  thisWeek.push(t);
+              } else {
+                  future.push(t);
+              }
+          });
+
+          return [
+              { title: 'Later Today', threads: laterToday },
+              { title: 'Tomorrow', threads: tomorrow },
+              { title: 'This Week', threads: thisWeek },
+              { title: 'Future', threads: future },
+          ].filter(s => s.threads.length > 0);
+      }
+
+      // INBOX / OTHER VIEWS
+      let filtered = props.threads;
+      
+      // Apply Pill Filtering only for Inbox or category views
+      if (activeView === 'inbox' || pills.some(p => p.category === activeView)) {
+          if (activePill !== 'all') {
+              filtered = filtered.filter(t => t.category.toLowerCase() === activePill.toLowerCase());
+          }
+      } 
+      // Specific View Filtering
+      else if (activeView === 'todos') {
+          filtered = filtered.filter(t => t.category === 'todos');
+      }
+      else if (activeView === 'starred') {
+          filtered = filtered.filter(t => t.isStarred);
+      }
+
+      // Standard Date Grouping (Today, Yesterday, Older)
+      const todayTh: Thread[] = [];
+      const yesterdayTh: Thread[] = [];
+      const olderTh: Thread[] = [];
+
+      const yesterdayStart = new Date(todayStart);
+      yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+
+      filtered.forEach(t => {
+          const date = new Date(t.timestamp);
+          if (date >= todayStart) {
+              todayTh.push(t);
+          } else if (date >= yesterdayStart) {
+              yesterdayTh.push(t);
+          } else {
+              olderTh.push(t);
+          }
+      });
+
+      return [
+          { title: 'Today', threads: todayTh },
+          { title: 'Yesterday', threads: yesterdayTh },
+          { title: 'Older', threads: olderTh },
+      ].filter(s => s.threads.length > 0);
+
+  }, [props.threads, activeView, activePill]);
+
+
+  // --- Empty States ---
+  const renderEmptyState = () => {
+      if (activeView === 'snoozed') {
+          return (
+            <div className="flex flex-col items-center justify-center h-64 text-center text-muted-foreground p-4">
+                <i className="fa-regular fa-clock text-5xl mb-4 text-primary/50"></i>
+                <p className="font-medium text-foreground">No snoozed emails</p>
+                <p className="text-sm mt-1">Snooze emails to see them here later.</p>
+            </div>
+          );
+      }
+      if (activeView === 'scheduled') {
+          return (
+            <div className="flex flex-col items-center justify-center h-64 text-center text-muted-foreground p-4">
+                <i className="fa-regular fa-calendar-check text-5xl mb-4 text-primary/50"></i>
+                <p className="font-medium text-foreground">No scheduled emails</p>
+                <p className="text-sm mt-1">Emails scheduled to send later will appear here.</p>
+            </div>
+          );
+      }
+      if (activeView === 'todos') {
+          return (
+            <div className="flex flex-col items-center justify-center h-64 text-center text-muted-foreground p-4">
+                <i className="fa-regular fa-circle-check text-5xl mb-4 text-primary/50"></i>
+                <p className="font-medium text-foreground">You're all caught up!</p>
+                <p className="text-sm mt-1">No pending to-dos.</p>
+            </div>
+          );
+      }
+      if (activeView === 'starred') {
+          return (
+            <div className="flex flex-col items-center justify-center h-64 text-center text-muted-foreground p-4">
+                <i className="fa-regular fa-star text-5xl mb-4 text-primary/50"></i>
+                <p className="font-medium text-foreground">No starred emails</p>
+                <p className="text-sm mt-1">Star important emails to see them here.</p>
+            </div>
+          );
+      }
+      return (
+        <div className="flex flex-col items-center justify-center h-64 text-center text-muted-foreground p-4">
+            <i className="fa-regular fa-envelope-open text-5xl mb-4 text-primary/50"></i>
+            <p className="font-medium text-foreground">All caught up!</p>
+        </div>
+      );
+  };
+
+  const showPills = uiTheme === 'modern' && !isBulkSelecting && activeView === 'inbox';
 
   return (
     <div className="bg-background flex flex-col h-full w-full relative">
@@ -201,11 +298,13 @@ const EmailListMobile: React.FC<EmailListMobileProps> = (props) => {
         onToggleBulkSelect={toggleBulkSelect}
         areAllSelectedRead={areAllSelectedRead}
         onOpenCalendar={props.onOpenCalendar}
+        areFiltersActive={props.areFiltersActive}
       />
       
       <div className="flex-1 overflow-y-auto no-scrollbar pb-32">
-        {uiTheme === 'modern' && !isBulkSelecting && (
-          <div className="px-3 py-3">
+        {/* Filter Pills - Only show on Inbox */}
+        {showPills && (
+          <div className="px-3 py-3 sticky top-0 z-10 bg-background/95 backdrop-blur-sm">
               <div ref={pillsContainerRef} className="flex space-x-2 overflow-x-auto no-scrollbar">
                   {pills.map((p, index) => 
                       <Pill 
@@ -225,17 +324,33 @@ const EmailListMobile: React.FC<EmailListMobileProps> = (props) => {
                 <i className="fa-solid fa-wand-magic-sparkles text-5xl mb-4 text-primary animate-pulse"></i>
                 <p className="font-medium text-foreground">AI is searching...</p>
             </div>
-        ) : filteredThreads.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-48 text-center text-muted-foreground p-4">
-                <i className="fa-regular fa-envelope-open text-5xl mb-4"></i>
-                <p className="font-medium text-foreground">All caught up!</p>
-            </div>
+        ) : sections.length === 0 ? (
+            renderEmptyState()
         ) : (
-            <>
-                <Section title="Today" threads={todayThreads} />
-                <Section title="Yesterday" threads={yesterdayThreads} />
-                <Section title="Older" threads={olderThreads} />
-            </>
+            sections.map((section, idx) => (
+                <React.Fragment key={section.title}>
+                    <h2 className="px-4 pt-6 pb-2 text-xs font-bold text-muted-foreground uppercase tracking-wider sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-0">
+                        {section.title}
+                    </h2>
+                    {section.threads.map(thread => (
+                        <EmailListItemMobile
+                            key={thread.id}
+                            thread={thread}
+                            isSelectedForBulk={selectedThreadIds.includes(thread.id)}
+                            onSelect={onSelectThread}
+                            selectedThreadIds={selectedThreadIds}
+                            onToggleSelection={onToggleSelection}
+                            onContextMenu={onContextMenu}
+                            onArchive={onArchive}
+                            onDelete={onDelete}
+                            isBulkSelecting={isBulkSelecting}
+                            setIsBulkSelecting={setIsBulkSelecting}
+                            isSnoozedView={activeView === 'snoozed'}
+                            {...props}
+                        />
+                    ))}
+                </React.Fragment>
+            ))
         )}
       </div>
 
@@ -276,6 +391,7 @@ const EmailListMobile: React.FC<EmailListMobileProps> = (props) => {
 
 const formatViewTitle = (view: string) => {
     if (view === 'inbox') return 'Inbox';
+    if (view === 'todos') return 'Tasks';
     return view.charAt(0).toUpperCase() + view.slice(1);
 };
 

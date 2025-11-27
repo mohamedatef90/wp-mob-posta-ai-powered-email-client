@@ -1,4 +1,6 @@
 
+
+
 import type { Thread, User, ChatConversation, DriveFile, Attachment } from './types';
 
 // --- Users ---
@@ -127,6 +129,43 @@ const LONG_TECH_CEO_BODY = `
 
 const TECH_COMPANY_THREADS: Omit<Thread, 'account'>[] = [
   {
+    id: 'dummy-filter-test',
+    subject: "Q4 Financial Report & Discussion",
+    participants: [davidChen, you],
+    messages: [
+        {
+            id: 'msg-dummy-1',
+            sender: davidChen,
+            body: `<p>Hi @Alex, please review the attached financial report for Q4. We need to discuss the budget allocation.</p>`,
+            timestamp: getDate(5, {hour: 10, minute: 0}),
+            attachments: [
+                { id: 'att-dummy-1', filename: 'Q4_Financials.pdf', url: '#', type: 'file' }
+            ]
+        }
+    ],
+    timestamp: getDate(5, {hour: 10, minute: 0}),
+    isRead: false,
+    isPinned: false,
+    category: 'finance',
+  },
+  {
+    id: 'meeting-demo-1',
+    subject: "Invitation: Project Phoenix Kickoff",
+    participants: [davidChen, you],
+    messages: [
+        {
+            id: 'msg-meeting-1',
+            sender: davidChen,
+            body: `<p>Hi Team,</p><p>We are ready to kick off the next phase of Project Phoenix.</p><p><strong>When:</strong> Tomorrow, 10:00 AM - 11:00 AM<br><strong>Where:</strong> Conference Room A<br><strong>Agenda:</strong><br>- Review Q3 results<br>- Roadmap for Q4<br>- Resource allocation</p><p>Please add this to your calendars.</p><p>Best,<br>David</p>`,
+            timestamp: getDate(0, {hour: 9, minute: 0}),
+        }
+    ],
+    timestamp: getDate(0, {hour: 9, minute: 0}),
+    isRead: false,
+    isPinned: false,
+    category: 'primary',
+  },
+  {
     id: 'thread-trip-photos',
     subject: "Photos from my trip!",
     participants: [sam, you],
@@ -187,6 +226,7 @@ const TECH_COMPANY_THREADS: Omit<Thread, 'account'>[] = [
     isRead: false,
     isPinned: true,
     category: 'primary',
+    tags: ['urgent', 'q3-strategy'],
   },
   {
     id: 'thread-2',
@@ -201,6 +241,7 @@ const TECH_COMPANY_THREADS: Omit<Thread, 'account'>[] = [
     isRead: false,
     isPinned: false,
     category: 'primary',
+    tags: ['team-event', 'social'],
   },
   {
     id: 'thread-3',
@@ -221,6 +262,7 @@ const TECH_COMPANY_THREADS: Omit<Thread, 'account'>[] = [
     isRead: true,
     isPinned: false,
     category: 'primary',
+    tags: ['action-required'],
   },
   {
     id: 'thread-5',
@@ -254,6 +296,7 @@ const TECH_COMPANY_THREADS: Omit<Thread, 'account'>[] = [
     isPinned: false,
     isStarred: true,
     category: 'primary',
+    tags: ['confidential', 'security'],
   },
    {
     id: 'starred-2',

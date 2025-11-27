@@ -22,7 +22,7 @@ const SettingsCard: React.FC<{ children: React.ReactNode, className?: string }> 
 const SettingsItem: React.FC<{ title: string; onClick?: () => void; icon?: React.ReactNode; }> = ({ title, onClick, icon }) => {
   const content = (
     <>
-      {icon && <div className="mr-4 w-6 text-center">{icon}</div>}
+      {icon && <div className="mr-4 w-6 text-center flex items-center justify-center">{icon}</div>}
       <div className="flex-grow min-w-0">
         <p className="font-medium text-foreground">{title}</p>
       </div>
@@ -38,12 +38,13 @@ const SettingsItem: React.FC<{ title: string; onClick?: () => void; icon?: React
 
 
 const providers = [
-    { name: 'Google', icon: 'fa-brands fa-google' },
-    { name: 'Outlook, Hotmail, and Live', icon: 'fa-brands fa-microsoft' },
-    { name: 'Office 365', icon: 'fa-brands fa-windows' },
-    { name: 'Yahoo', icon: 'fa-brands fa-yahoo' },
-    { name: 'Exchange and other accounts', icon: 'fa-solid fa-server' },
-    { name: 'Other (IMAP)', icon: 'fa-solid fa-at' },
+    { name: 'Posta', icon: 'https://i.postimg.cc/59BYkdyG/Posta.png', isImage: true },
+    { name: 'Google', icon: 'fa-brands fa-google', isImage: false },
+    { name: 'Outlook, Hotmail, and Live', icon: 'fa-brands fa-microsoft', isImage: false },
+    { name: 'Office 365', icon: 'fa-brands fa-windows', isImage: false },
+    { name: 'Yahoo', icon: 'fa-brands fa-yahoo', isImage: false },
+    { name: 'Exchange and other accounts', icon: 'fa-solid fa-server', isImage: false },
+    { name: 'Other (IMAP)', icon: 'fa-solid fa-at', isImage: false },
 ];
 
 
@@ -61,7 +62,11 @@ export const AddAccountScreen: React.FC<{onBack: () => void}> = ({onBack}) => (
                     <SettingsItem 
                         key={provider.name} 
                         title={provider.name}
-                        icon={<i className={`${provider.icon} text-xl text-muted-foreground`}></i>}
+                        icon={
+                            provider.isImage 
+                            ? <img src={provider.icon} alt={`${provider.name} logo`} className="w-5 h-5 rounded-md object-contain" />
+                            : <i className={`${provider.icon} text-xl text-muted-foreground`}></i>
+                        }
                         onClick={() => alert(`Adding ${provider.name}`)}
                     />
                 ))}

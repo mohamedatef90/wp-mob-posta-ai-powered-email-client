@@ -1121,13 +1121,18 @@ const AccountSettingsScreen: React.FC<{
     onEmptyRecycleBin: () => void;
     isSignatureEnabled: boolean;
     syncScheduleValue: string;
+    targetAccountEmail?: string;
 }> = ({ 
     onBack, onNavigate, emailSyncPeriod, retrievalSize, roamingRetrievalSize, 
     calendarSyncPeriod, onSelectCalendarPeriod, accountName, accountColor, onOpenAccountModal,
-    onOpenOutOfOfficeModal, onEmptyRecycleBin, isSignatureEnabled, syncScheduleValue
+    onOpenOutOfOfficeModal, onEmptyRecycleBin, isSignatureEnabled, syncScheduleValue, targetAccountEmail
 }) => {
   const { accounts, activeDomain } = useContext(AppContext);
-  const currentAccount = activeDomain === 'innovate' ? accounts[0] : accounts.find(a => a.email.includes(activeDomain)) || accounts[0];
+  
+  // Determine which account to show settings for
+  const currentAccount = targetAccountEmail 
+    ? accounts.find(a => a.email === targetAccountEmail) || accounts[0]
+    : (activeDomain === 'innovate' ? accounts[0] : accounts.find(a => a.email.includes(activeDomain)) || accounts[0]);
 
   const [syncEmails, setSyncEmails] = useState(true);
   const [syncCalendars, setSyncCalendars] = useState(false);
@@ -2443,6 +2448,9 @@ export const SettingsViewMobile: React.FC<SettingsViewMobileProps> = ({ isOpen, 
   const { accounts, theme, setTheme, initialSettingsView, setInitialSettingsView, activeDomain } = useContext(AppContext);
   const currentAccount = activeDomain === 'innovate' ? accounts[0] : accounts.find(a => a.email.includes(activeDomain)) || accounts[0];
   const [view, setView] = useState<keyof typeof views>('main');
+  // State to pass data to sub-views (e.g., which account to edit)
+  const [viewData, setViewData] = useState<any>(null);
+
   const [emailSyncPeriod, setEmailSyncPeriod] = useState('1 month');
   const [retrievalSize, setRetrievalSize] = useState('No limit');
   const [roamingRetrievalSize, setRoamingRetrievalSize] = useState('2 KB');
@@ -2515,6 +2523,7 @@ export const SettingsViewMobile: React.FC<SettingsViewMobileProps> = ({ isOpen, 
         setView(initialSettingsView as keyof typeof views || 'main');
     } else {
         setSearchQuery(''); // Clear search on close
+        setViewData(null);
     }
   }, [isOpen, initialSettingsView]);
   
@@ -2577,6 +2586,7 @@ export const SettingsViewMobile: React.FC<SettingsViewMobileProps> = ({ isOpen, 
 
   const handleClose = () => {
     setView('main'); // Reset view before closing
+    setViewData(null);
     setInitialSettingsView(null);
     setSearchQuery('');
     onClose();
@@ -2646,7 +2656,7 @@ export const SettingsViewMobile: React.FC<SettingsViewMobileProps> = ({ isOpen, 
                     />;
         case 'account':
             return <AccountSettingsScreen 
-                        onBack={() => setView('main')} 
+                        onBack={() => { setView('main'); setViewData(null); }}
                         onNavigate={v => setView(v)} 
                         emailSyncPeriod={emailSyncPeriod}
                         retrievalSize={retrievalSize}
@@ -2660,6 +2670,7 @@ export const SettingsViewMobile: React.FC<SettingsViewMobileProps> = ({ isOpen, 
                         onEmptyRecycleBin={() => setShowEmptyBinConfirm(true)}
                         isSignatureEnabled={isSignatureEnabled}
                         syncScheduleValue={syncScheduleValue}
+                        targetAccountEmail={viewData?.email}
                     />;
         case 'signature':
             return <SignatureScreen 
@@ -2747,7 +2758,16 @@ export const SettingsViewMobile: React.FC<SettingsViewMobileProps> = ({ isOpen, 
                             <>
                                 <SettingsSection title="Accounts" />
                                 <SettingsCard>
-                                    <SettingsItem title={currentAccount.email} description={currentAccount.name} onClick={() => setView('account')} icon={<img src={currentAccount.avatarUrl} alt={currentAccount.name} className="w-8 h-8 rounded-full" />} />
+                                    {accounts.map(acc => (
+                                        <SettingsItem 
+                                            key={acc.email}
+                                            title={acc.email} 
+                                            description={acc.name} 
+                                            onClick={() => { setViewData({ email: acc.email }); setView('account'); }} 
+                                            icon={<img src={acc.avatarUrl} alt={acc.name} className="w-8 h-8 rounded-full" />} 
+                                        />
+                                    ))}
+                                    <div className="border-t border-border mx-4"></div>
                                     <SettingsItem title="Add account" onClick={() => setView('addAccount')} icon={<PlusIcon className="h-5 w-5 text-muted-foreground" />} />
                                 </SettingsCard>
 

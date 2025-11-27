@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useRef, useCallback, useContext } from 'react';
 import EmailListHeader from './EmailListHeader';
 import EmailList from './EmailList';
@@ -181,7 +182,6 @@ const EmailView: React.FC<EmailViewProps> = (props) => {
             isAiSearching={props.isAiSearching}
             onOpenCalendar={props.onOpenCalendar}
             onOpenFilters={props.onOpenFilters}
-            areFiltersActive={props.areFiltersActive}
           />
         );
       }
@@ -228,7 +228,6 @@ const EmailView: React.FC<EmailViewProps> = (props) => {
         isAiSearching={props.isAiSearching}
         onOpenCalendar={props.onOpenCalendar}
         onOpenFilters={props.onOpenFilters}
-        areFiltersActive={props.areFiltersActive}
     />;
   }
 

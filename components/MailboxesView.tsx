@@ -30,6 +30,7 @@ const initialSmartFolders: MailboxItemConfig[] = [
   { id: 'todos', label: 'Todos', icon: 'fa-regular fa-circle-check', view: 'todos' },
   { id: 'starred', label: 'Starred', icon: 'fa-regular fa-star', view: 'starred' },
   { id: 'snoozed', label: 'Snoozed', icon: 'fa-regular fa-clock', view: 'snoozed', count: (_, s) => s },
+  { id: 'scheduled', label: 'Scheduled', icon: 'fa-regular fa-calendar-check', view: 'scheduled' },
 ];
 
 const createDomainFolders = (domain: 'microhard' | 'liverpool' | 'innovate'): MailboxItemConfig[] => [

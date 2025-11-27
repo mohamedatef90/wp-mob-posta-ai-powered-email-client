@@ -1,3 +1,5 @@
+
+
 import React, { useContext, useState } from 'react';
 import type { Thread, Message, User } from '../types';
 import { you } from '../constants';
@@ -20,6 +22,7 @@ interface EmailDetailProps {
   onSummarize: () => void;
   onGenerateAiReply?: () => void;
   isGeneratingReply?: boolean;
+  onAddToCalendar?: () => void;
 }
 
 const ThreadSummary: React.FC<{
@@ -152,7 +155,7 @@ const MessageItemClassic: React.FC<{ message: Message; onOpenKebabMenu: (anchorE
 };
 
 
-const EmailDetailMobile: React.FC<EmailDetailProps> = ({ thread, summaryState, onClearSummary, onComposeInteraction, onToggleStar, onOpenKebabMenu, onSummarize, onGenerateAiReply, isGeneratingReply }) => {
+const EmailDetailMobile: React.FC<EmailDetailProps> = ({ thread, summaryState, onClearSummary, onComposeInteraction, onToggleStar, onOpenKebabMenu, onSummarize, onGenerateAiReply, isGeneratingReply, onAddToCalendar }) => {
   const { uiTheme } = useContext(AppContext);
   
   if (!thread) {
@@ -163,6 +166,8 @@ const EmailDetailMobile: React.FC<EmailDetailProps> = ({ thread, summaryState, o
       </div>
     );
   }
+
+  const isMeeting = thread.subject.toLowerCase().includes('invitation') || thread.subject.toLowerCase().includes('meeting') || thread.subject.toLowerCase().includes('kickoff');
 
   // --- CLASSIC THEME ---
   if (uiTheme === 'classic') {
@@ -177,6 +182,18 @@ const EmailDetailMobile: React.FC<EmailDetailProps> = ({ thread, summaryState, o
             </div>
             {thread.category === 'primary' && <span className="bg-zinc-200 text-zinc-700 text-xs font-medium px-2 py-1 rounded">Inbox</span>}
             
+            {isMeeting && onAddToCalendar && (
+                <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-lg flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                        <i className="fa-regular fa-calendar-check text-blue-600 dark:text-blue-400 text-lg"></i>
+                        <div>
+                            <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">Meeting Detected</p>
+                        </div>
+                    </div>
+                    <Button size="sm" onClick={onAddToCalendar} className="bg-blue-600 text-white hover:bg-blue-700 border-none h-8 px-3 text-xs">Add to Calendar</Button>
+                </div>
+            )}
+
             {thread.messages.map((msg) => (
               <MessageItemClassic 
                 key={msg.id} 
@@ -206,6 +223,21 @@ const EmailDetailMobile: React.FC<EmailDetailProps> = ({ thread, summaryState, o
       <div className="flex-1 p-4 pt-20 pb-28">
         <h2 className="text-2xl font-bold text-foreground truncate mb-4">{thread.subject}</h2>
         
+        {isMeeting && onAddToCalendar && (
+            <div className="mb-6 bg-primary/10 backdrop-blur-sm border border-primary/20 rounded-2xl p-4 flex items-center justify-between shadow-sm">
+                <div className="flex items-center space-x-3">
+                    <div className="bg-primary/20 p-2.5 rounded-xl">
+                        <i className="fa-regular fa-calendar-plus text-primary text-xl"></i>
+                    </div>
+                    <div>
+                        <p className="font-bold text-foreground text-sm">Meeting Detected</p>
+                        <p className="text-xs text-muted-foreground">Add to your calendar</p>
+                    </div>
+                </div>
+                <Button size="sm" onClick={onAddToCalendar} className="rounded-lg font-semibold">Add</Button>
+            </div>
+        )}
+
         <div className="flex items-center gap-3 mb-4">
             <button 
                 onClick={onSummarize}

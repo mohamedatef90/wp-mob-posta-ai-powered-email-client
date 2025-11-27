@@ -1,4 +1,3 @@
-
 import React, { useContext, useState, useEffect, useMemo, useRef } from 'react';
 import type { User } from '../types';
 import { Button } from './ui/Button';
@@ -25,7 +24,6 @@ interface EmailListHeaderMobileProps {
   areAllSelectedRead?: boolean;
   onOpenCalendar?: () => void;
   onOpenFilters?: () => void;
-  areFiltersActive?: boolean;
 }
 
 const cn = (...classes: (string | boolean | undefined)[]) => classes.filter(Boolean).join(' ');
@@ -50,7 +48,6 @@ const EmailListHeaderMobile: React.FC<EmailListHeaderMobileProps> = ({
   areAllSelectedRead,
   onOpenCalendar,
   onOpenFilters,
-  areFiltersActive,
 }) => {
   const { setActiveModule, setInitialSettingsView, activeDomain, uiTheme } = useContext(AppContext);
   
@@ -211,45 +208,38 @@ const EmailListHeaderMobile: React.FC<EmailListHeaderMobileProps> = ({
                <button onClick={() => onToggleBulkSelect?.(true)} className="px-4 py-1.5 rounded-full bg-card/50 backdrop-blur-sm border border-border shadow-sm text-base font-semibold text-primary hover:bg-accent transition-colors">Select</button>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="relative p-0.5 bg-gradient-to-r from-purple-400 to-pink-600 rounded-full flex-1">
-              <div className="relative bg-background rounded-full flex items-center">
-                <div
-                    className={cn(
-                      "absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 bg-gradient-to-r from-purple-400 to-pink-600",
-                      isAiSearching && "animate-spin"
-                    )}
-                    style={{
-                      maskImage: "url('https://static.thenounproject.com/png/ai-model-icon-7645705-512.png')",
-                      maskSize: 'contain',
-                      maskRepeat: 'no-repeat',
-                      maskPosition: 'center',
-                      WebkitMaskImage: "url('https://static.thenounproject.com/png/ai-model-icon-7645705-512.png')",
-                      WebkitMaskSize: 'contain',
-                      WebkitMaskRepeat: 'no-repeat',
-                      WebkitMaskPosition: 'center',
-                    }}
-                  ></div>
-                <input
-                  type="text"
-                  placeholder={placeholder}
-                  value={searchQuery}
-                  onChange={(e) => onSearchQueryChange(e.target.value)}
-                  className="w-full bg-transparent border-none rounded-full pl-12 pr-4 h-11 text-base text-foreground placeholder:text-muted-foreground focus:outline-none"
-                />
-              </div>
+          <div className="relative p-0.5 bg-gradient-to-r from-purple-400 to-pink-600 rounded-full flex items-center">
+            <div className="relative bg-background rounded-full flex-1 flex items-center">
+               <div
+                  className={cn(
+                    "absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 bg-gradient-to-r from-purple-400 to-pink-600",
+                    isAiSearching && "animate-spin"
+                  )}
+                  style={{
+                    maskImage: "url('https://static.thenounproject.com/png/ai-model-icon-7645705-512.png')",
+                    maskSize: 'contain',
+                    maskRepeat: 'no-repeat',
+                    maskPosition: 'center',
+                    WebkitMaskImage: "url('https://static.thenounproject.com/png/ai-model-icon-7645705-512.png')",
+                    WebkitMaskSize: 'contain',
+                    WebkitMaskRepeat: 'no-repeat',
+                    WebkitMaskPosition: 'center',
+                  }}
+                ></div>
+              <input
+                type="text"
+                placeholder={placeholder}
+                value={searchQuery}
+                onChange={(e) => onSearchQueryChange(e.target.value)}
+                className="w-full bg-transparent border-none rounded-full pl-12 pr-4 h-11 text-base text-foreground placeholder:text-muted-foreground focus:outline-none"
+              />
             </div>
-            <button
-              onClick={onOpenFilters}
-              className={cn(
-                "h-12 w-12 flex-shrink-0 flex items-center justify-center rounded-full backdrop-blur-sm shadow-md transition-all",
-                areFiltersActive 
-                    ? "bg-primary text-primary-foreground border-2 border-primary shadow-lg shadow-primary/20" 
-                    : "bg-white/40 dark:bg-zinc-800/20 border-2 border-white dark:border-white/20 text-primary hover:bg-white/30 dark:hover:bg-zinc-800/40"
-              )}
-              aria-label="Open filters"
-            >
-              <i className="fa-solid fa-sliders text-lg"></i>
+             <button
+                onClick={onOpenFilters}
+                className="h-11 w-11 ml-2 flex-shrink-0 flex items-center justify-center rounded-full bg-white/40 dark:bg-zinc-800/20 backdrop-blur-sm border-2 border-white dark:border-white/20 text-primary shadow-md hover:bg-white/30 dark:hover:bg-zinc-800/40"
+                aria-label="Open filters"
+              >
+                <i className="fa-solid fa-sliders text-lg"></i>
             </button>
           </div>
         </>

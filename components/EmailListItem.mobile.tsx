@@ -1,3 +1,4 @@
+
 import React, { useRef, useState, useContext } from 'react';
 import type { Thread } from '../types';
 import { AppContext } from './context/AppContext';
@@ -16,6 +17,7 @@ interface EmailListItemProps {
   setIsBulkSelecting: (isSelecting: boolean) => void;
   onMarkAsRead: (threadId: string, isRead: boolean) => void;
   onSnoozeClick: (threadId: string, anchorEl: HTMLElement) => void;
+  isSnoozedView?: boolean;
 }
 
 const cn = (...classes: (string | boolean | undefined)[]) => classes.filter(Boolean).join(' ');
@@ -34,6 +36,7 @@ const EmailListItemMobile: React.FC<EmailListItemProps> = ({
   setIsBulkSelecting,
   onMarkAsRead,
   onSnoozeClick,
+  isSnoozedView,
 }) => {
   const { uiTheme } = useContext(AppContext);
   const itemRef = useRef<HTMLDivElement>(null);
@@ -226,14 +229,41 @@ const EmailListItemMobile: React.FC<EmailListItemProps> = ({
     if (gestureState.current.direction === 'horizontal') e.preventDefault();
   };
   
-  const formatDate = (dateString: string) => {
+  const formatDisplayDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    // If snoozed view, we might want to show Day of week + Time
+    if (isSnoozedView) {
+        // Check if it's today
+        if (date >= today && date < new Date(today.getTime() + 86400000)) {
+            return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+        }
+        // Check if it's tomorrow
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        if (date >= tomorrow && date < new Date(tomorrow.getTime() + 86400000)) {
+            return 'Tomorrow';
+        }
+        return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    }
+
+    // Default Inbox formatting
+    if (date >= today) {
+        return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+    }
+    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   };
   
   const sender = thread.messages[thread.messages.length - 1].sender;
   const isHighlighted = isSelectedForBulk;
   const isInBulkMode = isBulkSelecting || selectedThreadIds.length > 0;
+
+  // Use snoozedUntil if in Snoozed View, otherwise timestamp
+  const displayDate = isSnoozedView && thread.snoozedUntil 
+    ? formatDisplayDate(thread.snoozedUntil) 
+    : formatDisplayDate(thread.timestamp);
 
   // Modern theme actions
   const handleArchiveAction = (e: React.MouseEvent) => { e.stopPropagation(); onArchive(thread.id); closeActions(); };
@@ -345,7 +375,10 @@ const EmailListItemMobile: React.FC<EmailListItemProps> = ({
           <p className="text-base truncate font-bold text-foreground">
             {sender.name}
           </p>
-          <p className="text-sm text-muted-foreground whitespace-nowrap ml-2">{formatDate(thread.timestamp)}</p>
+          <div className={cn("flex items-center text-sm whitespace-nowrap ml-2", isSnoozedView ? "text-orange-500 font-medium" : "text-muted-foreground")}>
+             {isSnoozedView && <i className="fa-regular fa-clock mr-1 text-xs"></i>}
+             {displayDate}
+          </div>
         </div>
 
         <div className="flex justify-between items-start">
