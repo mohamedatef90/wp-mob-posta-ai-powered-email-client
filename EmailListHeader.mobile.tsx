@@ -1,7 +1,7 @@
 import React, { useContext, useState, useEffect, useMemo, useRef } from 'react';
 import type { User } from '../types';
 import { Button } from './ui/Button';
-import { AppContext } from './context/AppContext';
+import { AppContext, AppContextType } from './context/AppContext';
 import { ChevronLeftIcon } from './Icons';
 
 interface EmailListHeaderMobileProps {
@@ -49,7 +49,8 @@ const EmailListHeaderMobile: React.FC<EmailListHeaderMobileProps> = ({
   onOpenCalendar,
   onOpenFilters,
 }) => {
-  const { setActiveModule, setInitialSettingsView, activeDomain, uiTheme } = useContext(AppContext);
+  const context = useContext(AppContext) as AppContextType;
+  const { setActiveModule, setInitialSettingsView, activeDomain, uiTheme } = context;
   
   const placeholders = useMemo(() => [
     "Search by sender, e.g. 'Priya Sharma'",

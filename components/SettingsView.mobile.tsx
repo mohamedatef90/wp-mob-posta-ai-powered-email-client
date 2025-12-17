@@ -1,3 +1,4 @@
+
 import React, { useState, useContext, useRef, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { AppContext, Domain, Theme, UiTheme } from './context/AppContext';
@@ -28,6 +29,36 @@ interface SettingsViewMobileProps {
   isOpen: boolean;
   onClose: () => void;
 }
+
+const views = {
+    main: 'main',
+    account: 'account',
+    addAccount: 'addAccount',
+    manageFolders: 'manageFolders',
+    swipeActions: 'swipeActions',
+    editSwipeAction: 'editSwipeAction',
+    syncSchedule: 'syncSchedule',
+    setSyncSchedule: 'setSyncSchedule',
+    emailFoldersToSync: 'emailFoldersToSync',
+    emailSyncPeriod: 'emailSyncPeriod',
+    limitRetrievalSize: 'limitRetrievalSize',
+    roamingLimitRetrievalSize: 'roamingLimitRetrievalSize',
+    securityOptions: 'securityOptions',
+    exchangeServerSettings: 'exchangeServerSettings',
+    translator: 'translator',
+    permissions: 'permissions',
+    aboutEmail: 'aboutEmail',
+    openSourceLicences: 'openSourceLicences',
+    contactUs: 'contactUs',
+    appProgress: 'appProgress',
+    copilot: 'copilot',
+    notifications: 'notifications',
+    threadActions: 'threadActions',
+    customizeTimes: 'customizeTimes',
+    security: 'security',
+    protectAppAccess: 'protectAppAccess',
+    signature: 'signature',
+};
 
 // --- Local UI Components for Settings ---
 const usePopupPosition = (
@@ -672,7 +703,7 @@ const SYNC_SCHEDULE_OPTIONS = [
 // --- Sync Schedule Screen Component ---
 const SyncScheduleScreen: React.FC<{
     onBack: () => void;
-    onNavigate: (view: keyof typeof views) => void;
+    onNavigate: (view: string) => void;
     syncScheduleValue: string;
 }> = ({ onBack, onNavigate, syncScheduleValue }) => {
     const [peakSchedule, setPeakSchedule] = useState(false);
@@ -1108,7 +1139,7 @@ const SignatureScreen: React.FC<{
 
 const AccountSettingsScreen: React.FC<{ 
     onBack: () => void; 
-    onNavigate: (view: keyof typeof views) => void;
+    onNavigate: (view: string) => void;
     emailSyncPeriod: string;
     retrievalSize: string;
     roamingRetrievalSize: string;
@@ -1262,9 +1293,8 @@ const AccountSettingsScreen: React.FC<{
         <SettingsCard className="mt-6">
             <button 
                 onClick={() => {
-                    if (window.confirm('Are you sure you want to remove this account? This will log you out.')) {
-                        localStorage.removeItem('onboardingComplete');
-                        window.location.reload();
+                    if (window.confirm('Are you sure you want to remove this account?')) {
+                        onBack();
                     }
                 }}
                 className="w-full text-center px-4 py-3 font-medium text-destructive"
@@ -1365,7 +1395,7 @@ const PermissionsScreen: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 };
 
 // --- New: About Email Screen Component ---
-const AboutEmailScreen: React.FC<{ onBack: () => void; onNavigate: (view: keyof typeof views) => void; }> = ({ onBack, onNavigate }) => {
+const AboutEmailScreen: React.FC<{ onBack: () => void; onNavigate: (view: string) => void; }> = ({ onBack, onNavigate }) => {
     return (
         <>
             <header className="bg-card flex items-center p-4 shrink-0">
@@ -2042,7 +2072,7 @@ const CustomizeTimesScreen: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
 
 // --- New: Security Screen ---
-const SecurityScreen: React.FC<{ onBack: () => void; onNavigate: (view: keyof typeof views) => void }> = ({ onBack, onNavigate }) => {
+const SecurityScreen: React.FC<{ onBack: () => void; onNavigate: (view: string) => void }> = ({ onBack, onNavigate }) => {
     const [loadRemoteContent, setLoadRemoteContent] = useState(true);
     const [analytics, setAnalytics] = useState(true);
     const [pgpEnabled, setPgpEnabled] = useState(true);
@@ -2394,36 +2424,6 @@ const ProtectAppAccessScreen: React.FC<{
 
 // --- Main Settings Modal Component ---
 
-const views = {
-    main: 'main',
-    account: 'account',
-    addAccount: 'addAccount',
-    manageFolders: 'manageFolders',
-    swipeActions: 'swipeActions',
-    editSwipeAction: 'editSwipeAction',
-    syncSchedule: 'syncSchedule',
-    setSyncSchedule: 'setSyncSchedule',
-    emailFoldersToSync: 'emailFoldersToSync',
-    emailSyncPeriod: 'emailSyncPeriod',
-    limitRetrievalSize: 'limitRetrievalSize',
-    roamingLimitRetrievalSize: 'roamingLimitRetrievalSize',
-    securityOptions: 'securityOptions',
-    exchangeServerSettings: 'exchangeServerSettings',
-    translator: 'translator',
-    permissions: 'permissions',
-    aboutEmail: 'aboutEmail',
-    openSourceLicences: 'openSourceLicences',
-    contactUs: 'contactUs',
-    appProgress: 'appProgress',
-    copilot: 'copilot',
-    notifications: 'notifications',
-    threadActions: 'threadActions',
-    customizeTimes: 'customizeTimes',
-    security: 'security',
-    protectAppAccess: 'protectAppAccess',
-    signature: 'signature',
-};
-
 const RETRIEVAL_SIZE_OPTIONS = ['Headers only', '0.5 KB', '1 KB', '2 KB', '5 KB', '10 KB', '20 KB', '50 KB', '100 KB', 'No limit'];
 const ROAMING_RETRIEVAL_SIZE_OPTIONS = ['Use retrieval size setting', ...RETRIEVAL_SIZE_OPTIONS];
 
@@ -2447,7 +2447,10 @@ const SearchResultItem: React.FC<{ item: SearchableSetting }> = ({ item }) => {
 export const SettingsViewMobile: React.FC<SettingsViewMobileProps> = ({ isOpen, onClose }) => {
   const { accounts, theme, setTheme, initialSettingsView, setInitialSettingsView, activeDomain } = useContext(AppContext);
   const currentAccount = activeDomain === 'innovate' ? accounts[0] : accounts.find(a => a.email.includes(activeDomain)) || accounts[0];
-  const [view, setView] = useState<keyof typeof views>('main');
+  
+  // Use a string state but assert specific string literals if necessary for switch cases
+  // This avoids `never` errors if TypeScript inferred keys too narrowly or incorrectly.
+  const [view, setView] = useState<string>('main');
   // State to pass data to sub-views (e.g., which account to edit)
   const [viewData, setViewData] = useState<any>(null);
 
@@ -2520,7 +2523,7 @@ export const SettingsViewMobile: React.FC<SettingsViewMobileProps> = ({ isOpen, 
 
   useEffect(() => {
     if (isOpen) {
-        setView(initialSettingsView as keyof typeof views || 'main');
+        setView(initialSettingsView || 'main');
     } else {
         setSearchQuery(''); // Clear search on close
         setViewData(null);

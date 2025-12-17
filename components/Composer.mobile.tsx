@@ -2,67 +2,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import { Button } from './ui/Button';
-import { AICopilotIcon, SendLaterIcon } from './Icons';
 
 interface ComposerMobileProps {
     onClose: () => void;
     initialState?: { to?: string; subject?: string; body?: string; } | null;
     onSend: (email: { to: string, cc: string, bcc: string, subject: string, body: string, attachments: File[] }) => void;
 }
-
-const AIPopover: React.FC<{
-    anchorEl: HTMLElement | null;
-    isOpen: boolean;
-    onClose: () => void;
-    onSelect: (option: 'prompt' | 'proofread') => void;
-}> = ({ anchorEl, isOpen, onClose, onSelect }) => {
-    const popoverRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        const handleOutsideClick = (event: MouseEvent) => {
-            if (
-                popoverRef.current && 
-                !popoverRef.current.contains(event.target as Node) && 
-                anchorEl && 
-                !anchorEl.contains(event.target as Node)
-            ) {
-                onClose();
-            }
-        };
-        if (isOpen) {
-            document.addEventListener('mousedown', handleOutsideClick);
-        }
-        return () => {
-            document.removeEventListener('mousedown', handleOutsideClick);
-        };
-    }, [isOpen, onClose, anchorEl]);
-
-    if (!isOpen || !anchorEl) return null;
-
-    const rect = anchorEl.getBoundingClientRect();
-    const style = {
-        top: `${rect.bottom + 8}px`,
-        right: `${window.innerWidth - rect.right}px`,
-    };
-
-    return ReactDOM.createPortal(
-        <div 
-            ref={popoverRef}
-            className="fixed z-[60] bg-popover/80 backdrop-blur-xl rounded-xl shadow-lg w-48 animate-scaleIn"
-            style={style}
-        >
-            <div className="p-2">
-                <button onClick={() => onSelect('prompt')} className="w-full text-left px-3 py-2 text-sm text-popover-foreground hover:bg-accent rounded-md transition-colors">
-                    Enter prompt
-                </button>
-                <button onClick={() => onSelect('proofread')} className="w-full text-left px-3 py-2 text-sm text-popover-foreground hover:bg-accent rounded-md transition-colors">
-                    Proofread
-                </button>
-            </div>
-        </div>,
-        document.body
-    );
-};
 
 const CloseConfirmationModal: React.FC<{
     isOpen: boolean;
@@ -164,8 +109,6 @@ const ComposerMobile: React.FC<ComposerMobileProps> = ({ onClose, initialState, 
     const [attachments, setAttachments] = useState<File[]>([]);
     const [isCcBccExpanded, setIsCcBccExpanded] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [isAiMenuOpen, setIsAiMenuOpen] = useState(false);
-    const aiButtonRef = useRef<HTMLButtonElement>(null);
     const [isFormattingOpen, setIsFormattingOpen] = useState(false);
     
     // Logic for Close Modal
@@ -248,37 +191,18 @@ const ComposerMobile: React.FC<ComposerMobileProps> = ({ onClose, initialState, 
             setAttachments(prev => [...prev, ...Array.from(e.target.files!)]);
         }
     };
-    
-    const handleAiClick = () => {
-        setIsAiMenuOpen(prev => !prev);
-    };
-
-    const handleAiMenuSelect = (option: 'prompt' | 'proofread') => {
-        setIsAiMenuOpen(false);
-        if (option === 'proofread') {
-            alert('Proofreading email body...'); // Placeholder
-        } else {
-            const prompt = window.prompt("Enter your prompt for the AI:");
-            if (prompt) {
-                alert(`AI will work on: ${prompt}`); // Placeholder
-            }
-        }
-    };
 
     return (
-        <div className="fixed inset-0 bg-background z-50 flex flex-col animate-fadeInUp">
+        <div className="fixed inset-0 bg-background z-[100] flex flex-col animate-fadeInUp">
             <header className="p-2 flex items-center justify-between flex-shrink-0">
                 <Button variant="ghost" size="default" onClick={handleCloseAttempt} className="text-primary font-semibold">
                     Cancel
                 </Button>
                 <h2 className="text-lg font-bold">New Message</h2>
                 <div className="flex items-center space-x-2">
-                     <Button ref={aiButtonRef} variant="ghost" size="icon" className="h-10 w-10 text-primary" onClick={handleAiClick}>
-                        <AICopilotIcon className="w-6 h-6" />
-                    </Button>
                     <div className="relative">
-                        <Button variant="ghost" size="icon" onClick={() => setShowSendLaterMenu(!showSendLaterMenu)} className="h-10 w-10 text-blue-600 dark:text-blue-400">
-                            <SendLaterIcon className="w-6 h-6" />
+                        <Button variant="ghost" size="icon" onClick={() => setShowSendLaterMenu(!showSendLaterMenu)} className="h-10 w-10 text-primary">
+                            <i className="fa-regular fa-clock text-xl"></i>
                         </Button>
                         <SendLaterMenu isOpen={showSendLaterMenu} onClose={() => setShowSendLaterMenu(false)} onSelect={handleSendLaterSelect} />
                     </div>
@@ -392,13 +316,6 @@ const ComposerMobile: React.FC<ComposerMobileProps> = ({ onClose, initialState, 
                     </Button>
                 </div>
             </div>
-
-            <AIPopover
-                anchorEl={aiButtonRef.current}
-                isOpen={isAiMenuOpen}
-                onClose={() => setIsAiMenuOpen(false)}
-                onSelect={handleAiMenuSelect}
-            />
 
             <CloseConfirmationModal 
                 isOpen={showCloseConfirmation}

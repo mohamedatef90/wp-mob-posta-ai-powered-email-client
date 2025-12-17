@@ -4,6 +4,8 @@ import SignInStep from './SignInStep';
 import PersonalizationStep from './PersonalizationStep';
 import NotificationsStep from './NotificationsStep';
 import SetDefaultStep from './SetDefaultStep';
+import AiFeatureIntroStep from './AiFeatureIntroStep';
+import AiFeatureDemoStep from './AiFeatureDemoStep';
 
 interface OnboardingProps {
     onComplete: () => void;
@@ -29,12 +31,16 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
             case 1:
                 return <WelcomeStep onNext={nextStep} />;
             case 2:
-                return <SignInStep onNext={nextStep} onBack={prevStep} updateData={updateUserData} data={userData} onComplete={onComplete} />;
+                return <AiFeatureIntroStep onNext={nextStep} onBack={prevStep} />;
             case 3:
-                return <PersonalizationStep onNext={nextStep} onBack={prevStep} updateData={updateUserData} data={userData} />;
+                return <AiFeatureDemoStep onNext={nextStep} onBack={prevStep} />;
             case 4:
-                return <NotificationsStep onNext={nextStep} onBack={prevStep} />;
+                return <SignInStep onNext={nextStep} onBack={prevStep} updateData={updateUserData} data={userData} onComplete={onComplete} />;
             case 5:
+                return <PersonalizationStep onNext={nextStep} onBack={prevStep} updateData={updateUserData} data={userData} />;
+            case 6:
+                return <NotificationsStep onNext={nextStep} onBack={prevStep} />;
+            case 7:
                 return <SetDefaultStep onComplete={onComplete} onBack={prevStep} />;
             default:
                 return <WelcomeStep onNext={nextStep} />;

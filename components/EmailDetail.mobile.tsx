@@ -1,5 +1,4 @@
 
-
 import React, { useContext, useState } from 'react';
 import type { Thread, Message, User } from '../types';
 import { you } from '../constants';
@@ -32,30 +31,32 @@ const ThreadSummary: React.FC<{
     onClose: () => void;
 }> = ({ summary, isLoading, error, onClose }) => {
     return (
-        <div className="bg-secondary rounded-lg p-4 my-4 border border-border animate-fadeIn">
+        <div className="my-6 animate-fadeIn">
             <div className="flex justify-between items-center mb-2">
                 <div className="flex items-center space-x-2">
                     <i className="fa-solid fa-wand-magic-sparkles text-primary"></i>
-                    <h3 className="font-semibold text-secondary-foreground">AI Summary</h3>
+                    <h3 className="font-semibold text-foreground">AI Summary</h3>
                 </div>
-                <button onClick={onClose} className="h-7 w-7 flex items-center justify-center rounded-md hover:bg-background text-muted-foreground" title="Dismiss summary">
+                <button onClick={onClose} className="h-7 w-7 flex items-center justify-center rounded-md hover:bg-accent text-muted-foreground" title="Dismiss summary">
                     <i className="fa-solid fa-xmark w-4 h-4"></i>
                 </button>
             </div>
             
-            {isLoading && (
-                <div className="text-sm text-muted-foreground animate-pulse">Generating summary...</div>
-            )}
-            
-            {error && (
-                <div className="text-sm text-destructive">{error}</div>
-            )}
+            <div className="border-l-4 border-primary/30 pl-4">
+                {isLoading && (
+                    <div className="text-sm text-muted-foreground animate-pulse py-2">Generating summary...</div>
+                )}
+                
+                {error && (
+                    <div className="text-sm text-destructive py-2">{error}</div>
+                )}
 
-            {summary && (
-                <div className="whitespace-pre-wrap text-sm text-secondary-foreground/90 font-sans prose prose-sm max-w-none [&_ul]:my-2 [&_li]:my-1">
-                   {summary}
-                </div>
-            )}
+                {summary && (
+                    <p className="whitespace-pre-wrap text-sm text-muted-foreground italic leading-relaxed py-2">
+                       {summary}
+                    </p>
+                )}
+            </div>
         </div>
     );
 }
@@ -226,8 +227,8 @@ const EmailDetailMobile: React.FC<EmailDetailProps> = ({ thread, summaryState, o
         {isMeeting && onAddToCalendar && (
             <div className="mb-6 bg-primary/10 backdrop-blur-sm border border-primary/20 rounded-2xl p-4 flex items-center justify-between shadow-sm">
                 <div className="flex items-center space-x-3">
-                    <div className="bg-primary/20 p-2.5 rounded-xl">
-                        <i className="fa-regular fa-calendar-plus text-primary text-xl"></i>
+                    <div>
+                        <i className="fa-regular fa-calendar-plus text-primary text-3xl"></i>
                     </div>
                     <div>
                         <p className="font-bold text-foreground text-sm">Meeting Detected</p>
@@ -237,28 +238,6 @@ const EmailDetailMobile: React.FC<EmailDetailProps> = ({ thread, summaryState, o
                 <Button size="sm" onClick={onAddToCalendar} className="rounded-lg font-semibold">Add</Button>
             </div>
         )}
-
-        <div className="flex items-center gap-3 mb-4">
-            <button 
-                onClick={onSummarize}
-                className="flex-1 bg-white/20 dark:bg-zinc-800/20 backdrop-blur-sm border border-white/20 dark:border-white/20 rounded-xl shadow-md px-4 py-3 flex items-center justify-center space-x-2 transition-all hover:bg-white/30 dark:hover:bg-zinc-800/40"
-            >
-                <i className="fa-solid fa-wand-magic-sparkles bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600"></i>
-                <span className="font-semibold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600">
-                    Summarise
-                </span>
-            </button>
-            <button 
-                onClick={onGenerateAiReply}
-                disabled={isGeneratingReply}
-                className="flex-1 bg-white/20 dark:bg-zinc-800/20 backdrop-blur-sm border border-white/20 dark:border-white/20 rounded-xl shadow-md px-4 py-3 flex items-center justify-center space-x-2 transition-all hover:bg-white/30 dark:hover:bg-zinc-800/40 disabled:opacity-70 disabled:cursor-not-allowed"
-            >
-                <i className={`fa-solid fa-pen-sparkles bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600 ${isGeneratingReply ? 'animate-spin' : ''}`}></i>
-                <span className="font-semibold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600">
-                    {isGeneratingReply ? 'Drafting...' : 'Draft Reply'}
-                </span>
-            </button>
-        </div>
 
         {showSummary && (
             <ThreadSummary 

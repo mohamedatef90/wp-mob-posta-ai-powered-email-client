@@ -1,3 +1,4 @@
+
 import React, { useContext, useState, useRef } from 'react';
 // FIX: Import Domain type
 import { AppContext, type Domain } from './context/AppContext';
@@ -97,6 +98,7 @@ const CollapsibleSection: React.FC<{
 
 
 export const MailboxesView: React.FC<MailboxesViewProps> = ({ onNavigate, unreadCounts, snoozedCount, activeView }) => {
+    const { setActiveModule } = useContext(AppContext);
     const [isEditMode, setIsEditMode] = useState(false);
     
     const [mainItems, setMainItems] = useState(initialMainItems);
@@ -172,13 +174,24 @@ export const MailboxesView: React.FC<MailboxesViewProps> = ({ onNavigate, unread
   return (
     <div className="h-full w-full bg-background text-foreground flex flex-col mailboxes-mobile-light">
       <header className="sticky top-0 z-10 p-4 flex items-center justify-between bg-background/80 backdrop-blur-xl border-b border-border flex-shrink-0">
-        <h1 className="text-3xl font-bold">Mailboxes</h1>
-        <button 
-            onClick={() => setIsEditMode(p => !p)} 
-            className="px-4 py-1.5 rounded-full bg-card/50 backdrop-blur-sm border border-border shadow-sm text-base font-semibold text-primary hover:bg-accent transition-colors"
-        >
-          {isEditMode ? 'Done' : 'Edit'}
-        </button>
+        <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold">Mailboxes</h1>
+        </div>
+        <div className="flex items-center gap-3">
+            <button 
+                onClick={() => setActiveModule('settings')}
+                className="h-10 w-10 rounded-full hover:bg-accent flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="Settings"
+            >
+                <i className="fa-solid fa-gear text-xl"></i>
+            </button>
+            <button 
+                onClick={() => setIsEditMode(p => !p)} 
+                className="px-4 py-1.5 rounded-full bg-card/50 backdrop-blur-sm border border-border shadow-sm text-base font-semibold text-primary hover:bg-accent transition-colors"
+            >
+                {isEditMode ? 'Done' : 'Edit'}
+            </button>
+        </div>
       </header>
       <main className="flex-1 overflow-y-auto p-4 space-y-6">
         <div className="bg-card rounded-xl border border-border">

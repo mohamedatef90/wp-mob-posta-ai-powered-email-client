@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useRef, useCallback, useContext } from 'react';
 import EmailListHeader from './EmailListHeader';
 import EmailList from './EmailList';
@@ -7,7 +8,7 @@ import EmailDetail from './EmailDetail';
 import type { Thread, Message, User } from '../types';
 import Resizer from './ui/Resizer';
 // FIX: Import Domain type to ensure consistency.
-import { AppContext, type Domain } from './context/AppContext';
+import { AppContext, type Domain, type AppContextType } from './context/AppContext';
 
 // New Mobile Components
 import EmailListMobile from './EmailListMobile';
@@ -87,7 +88,7 @@ interface EmailViewProps {
 
 const EmailView: React.FC<EmailViewProps> = (props) => {
   const { isMobile, selectedThreadId, selectedThread, mobileMainView, setMobileMainView } = props;
-  const { uiTheme } = useContext(AppContext);
+  const { uiTheme } = useContext(AppContext) as AppContextType;
 
   // --- MOBILE VIEW ---
   if (isMobile) {
@@ -181,7 +182,6 @@ const EmailView: React.FC<EmailViewProps> = (props) => {
             isAiSearching={props.isAiSearching}
             onOpenCalendar={props.onOpenCalendar}
             onOpenFilters={props.onOpenFilters}
-            areFiltersActive={props.areFiltersActive}
           />
         );
       }
@@ -228,7 +228,6 @@ const EmailView: React.FC<EmailViewProps> = (props) => {
         isAiSearching={props.isAiSearching}
         onOpenCalendar={props.onOpenCalendar}
         onOpenFilters={props.onOpenFilters}
-        areFiltersActive={props.areFiltersActive}
     />;
   }
 

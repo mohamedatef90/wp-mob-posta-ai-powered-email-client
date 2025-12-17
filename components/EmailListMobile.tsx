@@ -1,7 +1,4 @@
 
-
-
-// ... (keep imports)
 import React, { useState, useRef, useMemo, useContext, useEffect } from 'react';
 import type { Thread, User } from '../types';
 import EmailListItemMobile from './EmailListItem.mobile';
@@ -10,7 +7,7 @@ import { AppContext, type Domain } from './context/AppContext';
 
 const cn = (...classes: (string | boolean | undefined)[]) => classes.filter(Boolean).join(' ');
 
-// ... (keep BulkActionBarMobile and Pill components same as original)
+// ... (BulkActionBarMobile and Pill components remain the same)
 const BulkActionBarMobile: React.FC<{ onFlag: () => void; onMove: () => void; onDelete: () => void; selectedCount: number; onMarkAsRead: () => void; areAllSelectedRead: boolean; }> = ({ onFlag, onMove, onDelete, selectedCount, onMarkAsRead, areAllSelectedRead }) => {
     const ActionButton: React.FC<{ icon: string; label: string; onClick: () => void; disabled: boolean }> = ({ icon, label, onClick, disabled }) => (
         <div className="flex flex-col items-center">
@@ -286,6 +283,7 @@ const EmailListMobile: React.FC<EmailListMobileProps> = (props) => {
   };
 
   const showPills = uiTheme === 'modern' && !isBulkSelecting && activeView === 'inbox';
+  const showSearchBar = uiTheme === 'modern' && !isBulkSelecting;
 
   return (
     <div className="bg-background flex flex-col h-full w-full relative">
@@ -301,10 +299,28 @@ const EmailListMobile: React.FC<EmailListMobileProps> = (props) => {
         areFiltersActive={props.areFiltersActive}
       />
       
-      <div className="flex-1 overflow-y-auto no-scrollbar pb-32">
+      <div className="flex-1 overflow-y-auto no-scrollbar pb-24">
+        {/* Search Bar - Modern Theme only */}
+        {showSearchBar && (
+            <div className="px-4 py-2">
+                <div className="relative w-full">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2">
+                    <i className="fa-solid fa-magnifying-glass text-muted-foreground text-lg"></i>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Search by sender, e.g. 'Priya Sharma'"
+                    value={props.searchQuery}
+                    onChange={(e) => props.onSearchQueryChange(e.target.value)}
+                    className="w-full bg-background border-2 border-primary/20 focus:border-primary rounded-full pl-12 pr-4 h-12 text-base text-foreground placeholder:text-muted-foreground focus:outline-none transition-colors"
+                  />
+                </div>
+            </div>
+        )}
+
         {/* Filter Pills - Only show on Inbox */}
         {showPills && (
-          <div className="px-3 py-3 sticky top-0 z-10 bg-background/95 backdrop-blur-sm">
+          <div className="px-3 py-3">
               <div ref={pillsContainerRef} className="flex space-x-2 overflow-x-auto no-scrollbar">
                   {pills.map((p, index) => 
                       <Pill 
@@ -355,10 +371,10 @@ const EmailListMobile: React.FC<EmailListMobileProps> = (props) => {
       </div>
 
        {!isBulkSelecting && <div className={cn(
-          "z-10",
+          "z-50",
           uiTheme === 'classic'
               ? 'fixed bottom-20 right-4'
-              : 'absolute bottom-24 right-4'
+              : 'fixed bottom-6 right-4'
       )}>
           <button
             onClick={props.onCompose}

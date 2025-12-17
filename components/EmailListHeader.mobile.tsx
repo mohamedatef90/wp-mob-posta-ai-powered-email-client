@@ -1,8 +1,8 @@
 
-import React, { useContext, useState, useEffect, useMemo, useRef } from 'react';
+import React, { useContext } from 'react';
 import type { User } from '../types';
 import { Button } from './ui/Button';
-import { AppContext } from './context/AppContext';
+import { AppContext, AppContextType } from './context/AppContext';
 import { ChevronLeftIcon } from './Icons';
 
 interface EmailListHeaderMobileProps {
@@ -52,70 +52,8 @@ const EmailListHeaderMobile: React.FC<EmailListHeaderMobileProps> = ({
   onOpenFilters,
   areFiltersActive,
 }) => {
-  const { setActiveModule, setInitialSettingsView, activeDomain, uiTheme } = useContext(AppContext);
+  const { setActiveModule, setInitialSettingsView, activeDomain, uiTheme } = useContext(AppContext) as AppContextType;
   
-  const placeholders = useMemo(() => [
-    "Search by sender, e.g. 'Priya Sharma'",
-    "Find topics, like 'Project Phoenix'",
-    "Look for 'Q3 budget spreadsheets'",
-    "Search for attachments from last week",
-    "What were the action items from Evelyn?",
-  ], []);
-
-  const [placeholder, setPlaceholder] = useState("");
-  const typingTimeoutRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    // If the user is typing, show a static placeholder and stop the animation.
-    if (searchQuery) {
-      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-      setPlaceholder("Search mail");
-      return;
-    }
-
-    let phIndex = 0;
-    let charIndex = 0;
-    let isDeleting = false;
-
-    const type = () => {
-      const currentPh = placeholders[phIndex];
-      
-      if (isDeleting) {
-        charIndex--;
-      } else {
-        charIndex++;
-      }
-
-      const displayText = currentPh.substring(0, charIndex);
-      setPlaceholder(displayText);
-      
-      let typingSpeed = isDeleting ? 50 : 50;
-
-      if (!isDeleting && charIndex === currentPh.length) {
-        // Pause at end
-        isDeleting = true;
-        typingSpeed = 2000;
-      } else if (isDeleting && charIndex === 0) {
-        // Move to next placeholder
-        isDeleting = false;
-        phIndex = (phIndex + 1) % placeholders.length;
-        typingSpeed = 500;
-      }
-      
-      typingTimeoutRef.current = window.setTimeout(type, typingSpeed);
-    };
-
-    // Start animation with an initial delay
-    typingTimeoutRef.current = window.setTimeout(type, 1000);
-
-    return () => {
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current);
-      }
-    };
-  }, [searchQuery, placeholders]);
-
-
   const handleAvatarClick = () => {
     if (setInitialSettingsView) {
       setInitialSettingsView('account');
@@ -125,7 +63,6 @@ const EmailListHeaderMobile: React.FC<EmailListHeaderMobileProps> = ({
     }
   };
 
-  // FIX: Replaced outdated 'hogwarts' domain reference with 'microhard'.
   const domainName = activeDomain === 'all' 
     ? 'All Inboxes' 
     : activeDomain === 'innovate' 
@@ -208,49 +145,19 @@ const EmailListHeaderMobile: React.FC<EmailListHeaderMobileProps> = ({
                <button onClick={onOpenCalendar} className="p-2 rounded-full bg-card/50 backdrop-blur-sm border border-border shadow-sm text-primary hover:bg-accent transition-colors">
                   <i className="fa-regular fa-calendar w-5 h-5"></i>
                </button>
+               <button 
+                  onClick={onOpenFilters}
+                  className={cn(
+                    "p-2 rounded-full backdrop-blur-sm border shadow-sm transition-colors",
+                    areFiltersActive 
+                        ? "bg-primary border-primary text-primary-foreground" 
+                        : "bg-card/50 border border-border text-primary hover:bg-accent"
+                  )}
+               >
+                  <i className="fa-solid fa-sliders w-5 h-5"></i>
+               </button>
                <button onClick={() => onToggleBulkSelect?.(true)} className="px-4 py-1.5 rounded-full bg-card/50 backdrop-blur-sm border border-border shadow-sm text-base font-semibold text-primary hover:bg-accent transition-colors">Select</button>
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="relative p-0.5 bg-gradient-to-r from-purple-400 to-pink-600 rounded-full flex-1">
-              <div className="relative bg-background rounded-full flex items-center">
-                <div
-                    className={cn(
-                      "absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 bg-gradient-to-r from-purple-400 to-pink-600",
-                      isAiSearching && "animate-spin"
-                    )}
-                    style={{
-                      maskImage: "url('https://static.thenounproject.com/png/ai-model-icon-7645705-512.png')",
-                      maskSize: 'contain',
-                      maskRepeat: 'no-repeat',
-                      maskPosition: 'center',
-                      WebkitMaskImage: "url('https://static.thenounproject.com/png/ai-model-icon-7645705-512.png')",
-                      WebkitMaskSize: 'contain',
-                      WebkitMaskRepeat: 'no-repeat',
-                      WebkitMaskPosition: 'center',
-                    }}
-                  ></div>
-                <input
-                  type="text"
-                  placeholder={placeholder}
-                  value={searchQuery}
-                  onChange={(e) => onSearchQueryChange(e.target.value)}
-                  className="w-full bg-transparent border-none rounded-full pl-12 pr-4 h-11 text-base text-foreground placeholder:text-muted-foreground focus:outline-none"
-                />
-              </div>
-            </div>
-            <button
-              onClick={onOpenFilters}
-              className={cn(
-                "h-12 w-12 flex-shrink-0 flex items-center justify-center rounded-full backdrop-blur-sm shadow-md transition-all",
-                areFiltersActive 
-                    ? "bg-primary text-primary-foreground border-2 border-primary shadow-lg shadow-primary/20" 
-                    : "bg-white/40 dark:bg-zinc-800/20 border-2 border-white dark:border-white/20 text-primary hover:bg-white/30 dark:hover:bg-zinc-800/40"
-              )}
-              aria-label="Open filters"
-            >
-              <i className="fa-solid fa-sliders text-lg"></i>
-            </button>
           </div>
         </>
       )}

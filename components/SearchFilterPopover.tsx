@@ -6,19 +6,20 @@ import { Label } from './ui/Label';
 
 export interface SearchFilters {
   sender: string;
-  dateRange: 'any' | '7d' | '30d';
-  status: 'any' | 'read' | 'unread';
+  dateRange: 'any' | '7d' | '30d' | { start?: string; end?: string };
+  status: 'any' | 'read' | 'unread' | 'sent' | 'starred' | 'snoozed';
 }
 
 interface SearchFilterPopoverProps {
   anchorEl: HTMLElement | null;
   onClose: () => void;
   filters: SearchFilters;
-  onApply: (filters: SearchFilters) => void;
+  onApply: (filters: Partial<SearchFilters>) => void;
 }
 
 const SearchFilterPopover: React.FC<SearchFilterPopoverProps> = ({ anchorEl, onClose, filters: initialFilters, onApply }) => {
-    const [filters, setFilters] = useState(initialFilters);
+    // Cast initial filters to local state type (simplified for UI)
+    const [filters, setFilters] = useState<SearchFilters>(initialFilters);
     const popoverRef = useRef<HTMLDivElement>(null);
     const [position, setPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
 
@@ -48,13 +49,19 @@ const SearchFilterPopover: React.FC<SearchFilterPopoverProps> = ({ anchorEl, onC
     };
 
     const handleClear = () => {
-        const clearedFilters = { sender: '', dateRange: 'any' as const, status: 'any' as const };
+        const clearedFilters: SearchFilters = { sender: '', dateRange: 'any', status: 'any' };
         setFilters(clearedFilters);
         onApply(clearedFilters);
         onClose();
     };
     
     if (!anchorEl) return null;
+
+    // Helper to safely get string values for select inputs
+    const getDateRangeValue = () => {
+        if (typeof filters.dateRange === 'string') return filters.dateRange;
+        return 'any'; // Default to 'any' for custom ranges in this simple UI
+    };
 
     return (
         <>
@@ -87,7 +94,7 @@ const SearchFilterPopover: React.FC<SearchFilterPopoverProps> = ({ anchorEl, onC
                         <Label htmlFor="date-range">Date</Label>
                         <Select 
                             id="date-range" 
-                            value={filters.dateRange} 
+                            value={getDateRangeValue()} 
                             onChange={e => setFilters(f => ({ ...f, dateRange: e.target.value as any }))}
                         >
                             <option value="any">Any time</option>

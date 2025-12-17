@@ -8,7 +8,7 @@ import EmailDetail from './EmailDetail';
 import type { Thread, Message, User } from '../types';
 import Resizer from './ui/Resizer';
 // FIX: Import Domain type to ensure consistency.
-import { AppContext, type Domain } from './context/AppContext';
+import { AppContext, type Domain, type AppContextType } from './context/AppContext';
 
 // New Mobile Components
 import EmailListMobile from './EmailListMobile';
@@ -88,7 +88,8 @@ interface EmailViewProps {
 
 const EmailView: React.FC<EmailViewProps> = (props) => {
   const { isMobile, selectedThreadId, selectedThread, mobileMainView, setMobileMainView } = props;
-  const { uiTheme } = useContext(AppContext);
+  const context = useContext(AppContext) as AppContextType;
+  const { uiTheme } = context;
 
   // --- MOBILE VIEW ---
   if (isMobile) {

@@ -13,7 +13,7 @@ export interface Account {
 
 export type Domain = 'microhard' | 'liverpool' | 'innovate';
 
-interface AppContextType {
+export interface AppContextType {
     accounts: Account[];
     theme: Theme;
     setTheme: (theme: Theme) => void;
@@ -34,6 +34,5 @@ export const AppContext = createContext<AppContextType>({
     initialSettingsView: null,
     setInitialSettingsView: () => {},
     setActiveModule: () => {},
-    // FIX: Changed default activeDomain to 'all' to match modern UI default and type.
     activeDomain: 'all',
 });
